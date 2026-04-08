@@ -11,9 +11,14 @@ export default async function NewArticlePage() {
     prisma.category.findMany({ orderBy: { name: "asc" } }),
     prisma.subCategory.findMany({ orderBy: { name: "asc" } }),
     prisma.authorProfile.findMany({ orderBy: { displayName: "asc" } }),
-    prisma.tag.findMany({ orderBy: { name: "asc" } }),
+    prisma.tag.findMany({ orderBy: [{ updatedAt: "desc" }, { name: "asc" }], take: 24 }),
     prisma.media.findMany({ orderBy: { createdAt: "desc" }, take: 80 }),
-    prisma.article.findMany({ orderBy: { updatedAt: "desc" }, take: 80 }),
+    prisma.article.findMany({
+      where: { status: { in: ["DRAFT", "SCHEDULED", "PUBLISHED"] } },
+      orderBy: { updatedAt: "desc" },
+      take: 24,
+      include: { category: true, subCategory: true },
+    }),
   ]);
 
   return (
@@ -27,13 +32,20 @@ export default async function NewArticlePage() {
             categories={categories.map((item) => ({ id: item.id, label: item.name }))}
             subcategories={subcategories.map((item) => ({ id: item.id, label: item.name, categoryId: item.categoryId }))}
             authors={authors.map((item) => ({ id: item.id, label: item.displayName }))}
-            tags={tags.map((item) => ({ id: item.id, label: item.name }))}
+            tagSeedOptions={tags.map((item) => ({
+              id: item.id,
+              label: item.name,
+              description: item.description || item.slug,
+            }))}
             media={media.map((item) => ({ id: item.id, label: item.fileName }))}
-            relatedArticles={relatedArticles.map((item) => ({ id: item.id, label: item.title }))}
+            relatedArticleSeedOptions={relatedArticles.map((item) => ({
+              id: item.id,
+              label: item.title,
+              description: [item.status, item.category.name, item.subCategory?.name].filter(Boolean).join(" · "),
+            }))}
           />
         </CardContent>
       </Card>
     </AdminShell>
   );
 }
-

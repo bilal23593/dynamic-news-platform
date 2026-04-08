@@ -39,6 +39,8 @@ const articleSchema = z.object({
   trending: z.boolean(),
   featured: z.boolean(),
   popular: z.boolean(),
+  relatedContentMode: z.enum(["AUTOMATIC", "MANUAL", "HYBRID"]).default("HYBRID"),
+  relatedContentLimit: z.coerce.number().int().min(2).max(8).default(4),
   tagIds: z.array(z.string()).default([]),
   relatedArticleIds: z.array(z.string()).default([]),
 });
@@ -96,6 +98,8 @@ export async function saveArticleAction(
     trending: booleanFromForm(formData.get("trending")),
     featured: booleanFromForm(formData.get("featured")),
     popular: booleanFromForm(formData.get("popular")),
+    relatedContentMode: optionalString(formData.get("relatedContentMode")) || "HYBRID",
+    relatedContentLimit: Number(formData.get("relatedContentLimit") || 4),
     tagIds: formData.getAll("tagIds").map(String),
     relatedArticleIds: formData.getAll("relatedArticleIds").map(String),
   });
@@ -154,6 +158,8 @@ export async function saveArticleAction(
       trending: parsed.data.trending,
       featured: parsed.data.featured,
       popular: parsed.data.popular,
+      relatedContentMode: parsed.data.relatedContentMode,
+      relatedContentLimit: parsed.data.relatedContentLimit,
       readTime: calculateReadTime(contentText),
     },
     create: {
@@ -182,6 +188,8 @@ export async function saveArticleAction(
       trending: parsed.data.trending,
       featured: parsed.data.featured,
       popular: parsed.data.popular,
+      relatedContentMode: parsed.data.relatedContentMode,
+      relatedContentLimit: parsed.data.relatedContentLimit,
       readTime: calculateReadTime(contentText),
     },
   });

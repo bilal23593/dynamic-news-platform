@@ -2,6 +2,10 @@
 
 import { useActionState, useState } from "react";
 
+import {
+  SearchableMultiSelect,
+  type SearchableOption,
+} from "@/features/admin/components/searchable-multi-select";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,9 +23,9 @@ export function ArticleEditorForm({
   categories,
   subcategories,
   authors,
-  tags,
+  tagSeedOptions,
   media,
-  relatedArticles,
+  relatedArticleSeedOptions,
 }: {
   article?: {
     id: string;
@@ -49,19 +53,26 @@ export function ArticleEditorForm({
     trending: boolean;
     featured: boolean;
     popular: boolean;
-    selectedTagIds: string[];
-    selectedRelatedIds: string[];
+    relatedContentMode: "AUTOMATIC" | "MANUAL" | "HYBRID";
+    relatedContentLimit: number;
+    selectedTags: SearchableOption[];
+    selectedRelatedArticles: SearchableOption[];
   };
   categories: Option[];
   subcategories: Array<Option & { categoryId: string }>;
   authors: Option[];
-  tags: Option[];
+  tagSeedOptions: SearchableOption[];
   media: Option[];
-  relatedArticles: Option[];
+  relatedArticleSeedOptions: SearchableOption[];
 }) {
   const [state, action] = useActionState(saveArticleAction, initialState);
   const [contentHtml, setContentHtml] = useState(article?.contentHtml || "<p></p>");
   const [contentJson, setContentJson] = useState(article?.contentJson || "");
+  const [categoryId, setCategoryId] = useState(article?.categoryId || categories[0]?.id || "");
+  const [relatedMode, setRelatedMode] = useState<
+    "AUTOMATIC" | "MANUAL" | "HYBRID"
+  >(article?.relatedContentMode || "HYBRID");
+  const filteredSubcategories = subcategories.filter((item) => item.categoryId === categoryId);
 
   return (
     <form action={action} className="grid gap-6">
@@ -106,7 +117,7 @@ export function ArticleEditorForm({
           <div className="grid gap-4 rounded-[var(--radius)] border border-border/70 bg-white p-5">
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
-              <select id="status" name="status" defaultValue={article?.status || "DRAFT"} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+              <select id="status" name="status" defaultValue={article?.status || "DRAFT"} className="h-11 w-full rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
                 {["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"].map((status) => (
                   <option key={status} value={status}>
                     {status}
@@ -120,7 +131,13 @@ export function ArticleEditorForm({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="categoryId">Category</Label>
-              <select id="categoryId" name="categoryId" defaultValue={article?.categoryId} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+              <select
+                id="categoryId"
+                name="categoryId"
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+                className="h-11 w-full rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3"
+              >
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label}
@@ -130,9 +147,9 @@ export function ArticleEditorForm({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="subCategoryId">Subcategory</Label>
-              <select id="subCategoryId" name="subCategoryId" defaultValue={article?.subCategoryId || ""} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+              <select id="subCategoryId" name="subCategoryId" defaultValue={article?.subCategoryId || ""} className="h-11 w-full rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
                 <option value="">None</option>
-                {subcategories.map((subcategory) => (
+                {filteredSubcategories.map((subcategory) => (
                   <option key={subcategory.id} value={subcategory.id}>
                     {subcategory.label}
                   </option>
@@ -141,7 +158,7 @@ export function ArticleEditorForm({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="authorId">Author</Label>
-              <select id="authorId" name="authorId" defaultValue={article?.authorId} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+              <select id="authorId" name="authorId" defaultValue={article?.authorId} className="h-11 w-full rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
                 {authors.map((author) => (
                   <option key={author.id} value={author.id}>
                     {author.label}
@@ -154,7 +171,7 @@ export function ArticleEditorForm({
           <div className="grid gap-4 rounded-[var(--radius)] border border-border/70 bg-white p-5">
             <div className="grid gap-2">
               <Label htmlFor="featuredImageId">Featured image</Label>
-              <select id="featuredImageId" name="featuredImageId" defaultValue={article?.featuredImageId || ""} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+              <select id="featuredImageId" name="featuredImageId" defaultValue={article?.featuredImageId || ""} className="h-11 w-full rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
                 <option value="">None</option>
                 {media.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -165,7 +182,7 @@ export function ArticleEditorForm({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ogImageId">OG image</Label>
-              <select id="ogImageId" name="ogImageId" defaultValue={article?.ogImageId || ""} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+              <select id="ogImageId" name="ogImageId" defaultValue={article?.ogImageId || ""} className="h-11 w-full rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
                 <option value="">None</option>
                 {media.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -185,37 +202,64 @@ export function ArticleEditorForm({
           </div>
 
           <div className="grid gap-4 rounded-[var(--radius)] border border-border/70 bg-white p-5">
+            <SearchableMultiSelect
+              name="tagIds"
+              label="Topics / tags"
+              description="Search and attach newsroom topics. These tags power related stories, tag pages, homepage sections, and future content clustering."
+              searchEndpoint="/api/admin/lookup/tags"
+              placeholder="Search topics like budget, health, elections..."
+              defaultSelected={article?.selectedTags || []}
+              initialOptions={tagSeedOptions}
+              emptyLabel="No tags match your search."
+            />
             <div className="grid gap-2">
-              <Label htmlFor="tagIds">Tags</Label>
+              <Label htmlFor="relatedContentMode">Related stories strategy</Label>
               <select
-                id="tagIds"
-                name="tagIds"
-                multiple
-                defaultValue={article?.selectedTagIds || []}
-                className="min-h-[140px] rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3 py-2"
+                id="relatedContentMode"
+                name="relatedContentMode"
+                value={relatedMode}
+                onChange={(event) =>
+                  setRelatedMode(event.target.value as "AUTOMATIC" | "MANUAL" | "HYBRID")
+                }
+                className="h-11 w-full rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3"
               >
-                {tags.map((tag) => (
-                  <option key={tag.id} value={tag.id}>
-                    {tag.label}
-                  </option>
-                ))}
+                <option value="HYBRID">Hybrid: pinned first, then automatic</option>
+                <option value="AUTOMATIC">Automatic: tags and category only</option>
+                <option value="MANUAL">Manual: pinned stories only</option>
               </select>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Automatic related stories are ranked from shared tags first, then category context, then current newsroom priority.
+              </p>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="relatedArticleIds">Related stories</Label>
-              <select
-                id="relatedArticleIds"
-                name="relatedArticleIds"
-                multiple
-                defaultValue={article?.selectedRelatedIds || []}
-                className="min-h-[140px] rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3 py-2"
-              >
-                {relatedArticles.map((story) => (
-                  <option key={story.id} value={story.id}>
-                    {story.label}
-                  </option>
-                ))}
-              </select>
+              <Label htmlFor="relatedContentLimit">Related stories count</Label>
+              <Input
+                id="relatedContentLimit"
+                name="relatedContentLimit"
+                type="number"
+                min={2}
+                max={8}
+                defaultValue={article?.relatedContentLimit || 4}
+              />
+            </div>
+            <SearchableMultiSelect
+              name="relatedArticleIds"
+              label="Pinned related stories"
+              description={
+                relatedMode === "AUTOMATIC"
+                  ? "Optional pins are saved for later, but live related stories are currently driven by tags and category."
+                  : relatedMode === "MANUAL"
+                    ? "These pinned stories define the related module. If none are pinned, the site falls back automatically."
+                    : "These pinned stories appear first, then the system fills any remaining slots automatically."
+              }
+              searchEndpoint={`/api/admin/lookup/articles${article?.id ? `?excludeId=${article.id}` : ""}`}
+              placeholder="Search stories by headline, slug, or excerpt..."
+              defaultSelected={article?.selectedRelatedArticles || []}
+              initialOptions={relatedArticleSeedOptions}
+              emptyLabel="No stories match your search."
+            />
+            <div className="rounded-[calc(var(--radius)-2px)] border border-border/70 bg-muted/20 px-4 py-3 text-sm leading-6 text-muted-foreground">
+              Future-safe workflow: editors tag the story once, and the platform can reuse that topic data for related content, tag pages, homepage automation, and future recommendation systems.
             </div>
           </div>
 

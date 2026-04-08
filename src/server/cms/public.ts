@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { demoAdSlots, demoArticles, demoAuthors, demoCategories, demoComments, demoHomepageSections, demoPages, demoRedirects, demoTags } from "@/config/demo-newsroom";
 import { isRenderableAdSlot } from "@/lib/ads";
 import { selectAutomaticHomepageItems } from "@/lib/homepage-selection";
+import { resolveRelatedStories } from "@/lib/related-content";
 import type {
   HomepageSectionData,
   HomepageSectionSettings,
@@ -434,7 +435,7 @@ export async function getArticleBySlug(slug: string): Promise<PublicArticleDetai
           },
           relatedFrom: {
             orderBy: { sortOrder: "asc" },
-            take: 4,
+            take: 12,
             include: {
               targetArticle: {
                 include: publicArticleInclude,
@@ -447,12 +448,70 @@ export async function getArticleBySlug(slug: string): Promise<PublicArticleDetai
       if (!article) return null;
 
       const base = mapPrismaArticle(article);
+      const manualRelated = article.relatedFrom
+        .filter((relation) => relation.targetArticle.status === "PUBLISHED")
+        .map((relation) => mapPrismaArticle(relation.targetArticle));
+      const excludedIds = [article.id, ...manualRelated.map((item) => item.id).filter(Boolean)] as string[];
+      const tagIds = article.tags.map((item) => item.tagId);
+
+      const [sharedTagCandidates, categoryCandidates, latestCandidates] = await Promise.all([
+        tagIds.length
+          ? prisma.article.findMany({
+              where: {
+                id: { notIn: excludedIds },
+                status: "PUBLISHED",
+                tags: { some: { tagId: { in: tagIds } } },
+              },
+              include: publicArticleInclude,
+              orderBy: [{ publishAt: "desc" }, { viewCount: "desc" }],
+              take: 18,
+            })
+          : Promise.resolve([]),
+        prisma.article.findMany({
+          where: {
+            id: { notIn: excludedIds },
+            status: "PUBLISHED",
+            OR: [
+              ...(article.subCategoryId
+                ? [{ subCategoryId: article.subCategoryId } as const]
+                : []),
+              { categoryId: article.categoryId },
+            ],
+          },
+          include: publicArticleInclude,
+          orderBy: [{ publishAt: "desc" }, { viewCount: "desc" }],
+          take: 18,
+        }),
+        prisma.article.findMany({
+          where: {
+            id: { notIn: excludedIds },
+            status: "PUBLISHED",
+          },
+          include: publicArticleInclude,
+          orderBy: [
+            { featured: "desc" },
+            { trending: "desc" },
+            { popular: "desc" },
+            { publishAt: "desc" },
+          ],
+          take: 18,
+        }),
+      ]);
+
+      const related = resolveRelatedStories({
+        article: base,
+        manual: manualRelated,
+        automatic: [...sharedTagCandidates, ...categoryCandidates, ...latestCandidates].map(mapPrismaArticle),
+        mode: article.relatedContentMode,
+        limit: article.relatedContentLimit,
+      });
+
       return {
         ...base,
         contentHtml: article.contentHtml,
         canonicalUrl: article.canonicalUrl,
         allowComments: article.allowComments,
-        related: article.relatedFrom.map((relation) => mapPrismaArticle(relation.targetArticle)),
+        related,
         comments: article.comments.map<PublicComment>((comment) => ({
           id: comment.id,
           authorName: comment.authorName,
@@ -466,15 +525,21 @@ export async function getArticleBySlug(slug: string): Promise<PublicArticleDetai
       const article = demoArticles.find((item) => item.slug === slug);
       if (!article) return null;
       const base = mapDemoArticle(article);
+      const automaticPool = demoArticles
+        .filter((item) => item.slug !== slug)
+        .map(mapDemoArticle);
       return {
         ...base,
         contentHtml: article.contentHtml,
         canonicalUrl: null,
         allowComments: true,
-        related: demoArticles
-          .filter((item) => item.slug !== slug && item.categorySlug === article.categorySlug)
-          .slice(0, 4)
-          .map(mapDemoArticle),
+        related: resolveRelatedStories({
+          article: base,
+          manual: [],
+          automatic: automaticPool,
+          mode: "HYBRID",
+          limit: 4,
+        }),
         comments: demoComments
           .filter((comment) => comment.articleSlug === slug && comment.status === "APPROVED")
           .map((comment, index) => ({

@@ -20,6 +20,12 @@ enum ArticleStatus {
   ARCHIVED
 }
 
+enum RelatedContentMode {
+  AUTOMATIC
+  MANUAL
+  HYBRID
+}
+
 enum PageStatus {
   DRAFT
   PUBLISHED
@@ -291,6 +297,8 @@ model Article {
   trending         Boolean               @default(false)
   featured         Boolean               @default(false)
   popular          Boolean               @default(false)
+  relatedContentMode RelatedContentMode  @default(HYBRID)
+  relatedContentLimit Int                @default(4)
   seoTitle         String?
   metaDescription  String?
   canonicalUrl     String?
