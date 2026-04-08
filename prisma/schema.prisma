@@ -1,0 +1,598 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum ArticleStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+enum SectionType {
+  HERO
+  BREAKING_STRIP
+  LATEST_NEWS
+  TRENDING
+  MOST_READ
+  CATEGORY_BLOCK
+  EDITOR_PICKS
+  VIDEO_HIGHLIGHTS
+  SPONSORED_BLOCK
+  NEWSLETTER_CTA
+  AD_SLOT_BLOCK
+}
+
+enum SectionSourceType {
+  MANUAL
+  LATEST
+  TRENDING
+  MOST_READ
+  BREAKING
+  FEATURED
+  CATEGORY
+  TAG
+  VIDEO
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+  EMBED
+}
+
+enum AdPlacement {
+  HEADER
+  SIDEBAR
+  IN_ARTICLE
+  FOOTER
+  HOMEPAGE
+  INLINE
+  SPONSORED
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+enum ImportSourceType {
+  WORDPRESS_XML
+  WORDPRESS_API
+  CSV
+  WORDPRESS_DB
+}
+
+enum ImportStatus {
+  DRAFT
+  DRY_RUN
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum ImportLogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+enum LegacyEntityType {
+  ARTICLE
+  PAGE
+  MEDIA
+  CATEGORY
+  TAG
+  AUTHOR
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  label       String
+  permissions Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  image         String?
+  status        UserStatus     @default(ACTIVE)
+  lastLoginAt   DateTime?
+  roleId        String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  role          Role           @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  authorProfile AuthorProfile?
+  sessions      Session[]
+  media         Media[]
+  importBatches ImportBatch[]
+
+  @@index([roleId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model AuthorProfile {
+  id             String             @id @default(cuid())
+  userId         String?            @unique
+  displayName    String
+  slug           String             @unique
+  bio            String
+  title          String?
+  shortBio       String?
+  email          String?
+  location       String?
+  website        String?
+  twitterUrl     String?
+  instagramUrl   String?
+  linkedinUrl    String?
+  legacyWpAuthor String?
+  avatarId       String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  user           User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  avatar         Media?             @relation("AuthorAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+  articles       Article[]
+  legacyMaps     LegacyContentMap[] @relation("LegacyMapAuthor")
+
+  @@index([displayName])
+}
+
+model Media {
+  id                String                @id @default(cuid())
+  kind              MediaKind             @default(IMAGE)
+  title             String?
+  altText           String?
+  caption           String?
+  fileName          String
+  originalName      String
+  mimeType          String
+  extension         String?
+  url               String
+  storageProvider   String                @default("local")
+  storagePath       String
+  bytes             Int                   @default(0)
+  width             Int?
+  height            Int?
+  duration          Int?
+  metadata          Json?
+  legacyUrl         String?
+  createdById       String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  createdBy         User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  authorAvatars     AuthorProfile[]       @relation("AuthorAvatar")
+  articleFeaturedIn Article[]             @relation("ArticleFeaturedImage")
+  articleOgImages   Article[]             @relation("ArticleOgImage")
+  pageOgImages      Page[]                @relation("PageOgImage")
+  galleryItems      ArticleGalleryItem[]
+  homepageItems     HomepageSectionItem[]
+  legacyMaps        LegacyContentMap[]    @relation("LegacyMapMedia")
+
+  @@index([kind, createdAt])
+}
+
+model Category {
+  id               String             @id @default(cuid())
+  name             String
+  slug             String             @unique
+  description      String?
+  color            String?
+  label            String?
+  sortOrder        Int                @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  subcategories    SubCategory[]
+  articles         Article[]
+  homepageSections HomepageSection[]
+  legacyMaps       LegacyContentMap[] @relation("LegacyMapCategory")
+
+  @@index([sortOrder])
+}
+
+model SubCategory {
+  id          String    @id @default(cuid())
+  categoryId  String
+  name        String
+  slug        String
+  description String?
+  color       String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  articles    Article[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId, sortOrder])
+}
+
+model Tag {
+  id               String             @id @default(cuid())
+  name             String
+  slug             String             @unique
+  description      String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  articleTags      ArticleTag[]
+  homepageSections HomepageSection[]
+  legacyMaps       LegacyContentMap[] @relation("LegacyMapTag")
+}
+
+model Article {
+  id               String                @id @default(cuid())
+  legacyPostId     String?
+  legacySlug       String?
+  legacyAuthorName String?
+  title            String
+  slug             String                @unique
+  subtitle         String?
+  excerpt          String
+  contentJson      Json?
+  contentHtml      String
+  contentText      String
+  featuredImageId  String?
+  imageCaption     String?
+  videoEmbedUrl    String?
+  categoryId       String
+  subCategoryId    String?
+  authorId         String
+  status           ArticleStatus         @default(DRAFT)
+  publishAt        DateTime              @default(now())
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  breakingNews     Boolean               @default(false)
+  trending         Boolean               @default(false)
+  featured         Boolean               @default(false)
+  popular          Boolean               @default(false)
+  seoTitle         String?
+  metaDescription  String?
+  canonicalUrl     String?
+  ogImageId        String?
+  schemaType       String                @default("NewsArticle")
+  viewCount        Int                   @default(0)
+  readTime         Int                   @default(1)
+  allowComments    Boolean               @default(true)
+  importBatchId    String?
+  author           AuthorProfile         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  category         Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  subCategory      SubCategory?          @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
+  featuredImage    Media?                @relation("ArticleFeaturedImage", fields: [featuredImageId], references: [id], onDelete: SetNull)
+  ogImage          Media?                @relation("ArticleOgImage", fields: [ogImageId], references: [id], onDelete: SetNull)
+  tags             ArticleTag[]
+  comments         Comment[]
+  galleryItems     ArticleGalleryItem[]
+  relatedFrom      ArticleRelation[]     @relation("RelatedSource")
+  relatedTo        ArticleRelation[]     @relation("RelatedTarget")
+  homepageItems    HomepageSectionItem[]
+  importBatch      ImportBatch?          @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  legacyMaps       LegacyContentMap[]    @relation("LegacyMapArticle")
+
+  @@index([status, publishAt(sort: Desc)])
+  @@index([categoryId, status, publishAt(sort: Desc)])
+  @@index([authorId, status, publishAt(sort: Desc)])
+  @@index([breakingNews, publishAt(sort: Desc)])
+  @@index([trending, publishAt(sort: Desc)])
+  @@index([featured, publishAt(sort: Desc)])
+  @@index([popular, viewCount(sort: Desc)])
+}
+
+model ArticleTag {
+  articleId  String
+  tagId      String
+  assignedAt DateTime @default(now())
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+}
+
+model ArticleGalleryItem {
+  id        String  @id @default(cuid())
+  articleId String
+  mediaId   String
+  sortOrder Int     @default(0)
+  caption   String?
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, sortOrder])
+}
+
+model ArticleRelation {
+  id              String  @id @default(cuid())
+  sourceArticleId String
+  targetArticleId String
+  sortOrder       Int     @default(0)
+  relationKind    String  @default("RELATED")
+  sourceArticle   Article @relation("RelatedSource", fields: [sourceArticleId], references: [id], onDelete: Cascade)
+  targetArticle   Article @relation("RelatedTarget", fields: [targetArticleId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceArticleId, targetArticleId])
+  @@index([sourceArticleId, sortOrder])
+}
+
+model Page {
+  id              String                @id @default(cuid())
+  legacyPageId    String?
+  legacySlug      String?
+  title           String
+  slug            String                @unique
+  summary         String?
+  contentJson     Json?
+  contentHtml     String
+  status          PageStatus            @default(DRAFT)
+  seoTitle        String?
+  metaDescription String?
+  canonicalUrl    String?
+  schemaType      String                @default("WebPage")
+  ogImageId       String?
+  showInHeader    Boolean               @default(false)
+  showInFooter    Boolean               @default(true)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  ogImage         Media?                @relation("PageOgImage", fields: [ogImageId], references: [id], onDelete: SetNull)
+  homepageItems   HomepageSectionItem[]
+  legacyMaps      LegacyContentMap[]    @relation("LegacyMapPage")
+
+  @@index([status])
+}
+
+model Comment {
+  id              String        @id @default(cuid())
+  articleId       String
+  parentId        String?
+  authorName      String
+  authorEmail     String
+  authorWebsite   String?
+  content         String
+  status          CommentStatus @default(PENDING)
+  ipHash          String?
+  userAgent       String?
+  moderationNotes String?
+  approvedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  article         Article       @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  parent          Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies         Comment[]     @relation("CommentReplies")
+
+  @@index([articleId, status, createdAt(sort: Desc)])
+}
+
+model Subscriber {
+  id        String           @id @default(cuid())
+  email     String           @unique
+  firstName String?
+  status    SubscriberStatus @default(ACTIVE)
+  source    String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+}
+
+model HomepageSection {
+  id          String                @id @default(cuid())
+  key         String                @unique
+  type        SectionType
+  title       String
+  description String?
+  enabled     Boolean               @default(true)
+  sortOrder   Int                   @default(0)
+  sourceType  SectionSourceType     @default(MANUAL)
+  limit       Int                   @default(4)
+  settings    Json?
+  categoryId  String?
+  tagId       String?
+  adSlotId    String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  category    Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tag         Tag?                  @relation(fields: [tagId], references: [id], onDelete: SetNull)
+  adSlot      AdSlot?               @relation(fields: [adSlotId], references: [id], onDelete: SetNull)
+  items       HomepageSectionItem[]
+
+  @@index([enabled, sortOrder])
+}
+
+model HomepageSectionItem {
+  id        String          @id @default(cuid())
+  sectionId String
+  articleId String?
+  pageId    String?
+  mediaId   String?
+  adSlotId  String?
+  sortOrder Int             @default(0)
+  label     String?
+  createdAt DateTime        @default(now())
+  section   HomepageSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  article   Article?        @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  page      Page?           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  media     Media?          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  adSlot    AdSlot?         @relation(fields: [adSlotId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, sortOrder])
+}
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  group       String
+  label       String
+  description String?
+  value       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([group])
+}
+
+model Redirect {
+  id              String   @id @default(cuid())
+  sourcePath      String   @unique
+  destinationPath String
+  statusCode      Int      @default(301)
+  active          Boolean  @default(true)
+  hits            Int      @default(0)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([active])
+}
+
+model AdSlot {
+  id                   String                @id @default(cuid())
+  key                  String                @unique
+  name                 String
+  placement            AdPlacement
+  description          String?
+  sponsorLabel         String?
+  advertiserName       String?
+  ctaLabel             String?
+  codeHtml             String?
+  imageUrl             String?
+  targetUrl            String?
+  positionKey          String?
+  injectAfterParagraph Int?
+  displayOrder         Int                   @default(0)
+  enabled              Boolean               @default(true)
+  creativeLive         Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  homepageSections     HomepageSection[]
+  homepageItems        HomepageSectionItem[]
+
+  @@index([placement, enabled, creativeLive, displayOrder])
+  @@index([positionKey, enabled, creativeLive])
+}
+
+model ImportBatch {
+  id            String             @id @default(cuid())
+  sourceType    ImportSourceType
+  status        ImportStatus       @default(DRAFT)
+  title         String
+  fileName      String?
+  sourceUrl     String?
+  dryRun        Boolean            @default(true)
+  stats         Json?
+  options       Json?
+  initiatedById String?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  initiatedBy   User?              @relation(fields: [initiatedById], references: [id], onDelete: SetNull)
+  logs          ImportLog[]
+  articles      Article[]
+  legacyMaps    LegacyContentMap[]
+
+  @@index([status, createdAt(sort: Desc)])
+}
+
+model ImportLog {
+  id               String         @id @default(cuid())
+  batchId          String
+  level            ImportLogLevel @default(INFO)
+  entityType       String
+  entityIdentifier String?
+  message          String
+  payload          Json?
+  createdAt        DateTime       @default(now())
+  batch            ImportBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, createdAt(sort: Desc)])
+}
+
+model LegacyContentMap {
+  id               String           @id @default(cuid())
+  batchId          String?
+  sourceType       ImportSourceType
+  legacyEntityType LegacyEntityType
+  legacyId         String
+  legacySlug       String?
+  legacyUrl        String?
+  checksum         String?
+  status           String?
+  newArticleId     String?
+  newPageId        String?
+  newMediaId       String?
+  newCategoryId    String?
+  newTagId         String?
+  newAuthorId      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  batch            ImportBatch?     @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  newArticle       Article?         @relation("LegacyMapArticle", fields: [newArticleId], references: [id], onDelete: SetNull)
+  newPage          Page?            @relation("LegacyMapPage", fields: [newPageId], references: [id], onDelete: SetNull)
+  newMedia         Media?           @relation("LegacyMapMedia", fields: [newMediaId], references: [id], onDelete: SetNull)
+  newCategory      Category?        @relation("LegacyMapCategory", fields: [newCategoryId], references: [id], onDelete: SetNull)
+  newTag           Tag?             @relation("LegacyMapTag", fields: [newTagId], references: [id], onDelete: SetNull)
+  newAuthor        AuthorProfile?   @relation("LegacyMapAuthor", fields: [newAuthorId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceType, legacyEntityType, legacyId])
+  @@index([legacySlug])
+  @@index([legacyUrl])
+}
+
+model ExternalSourceMapping {
+  id               String           @id @default(cuid())
+  sourceType       ImportSourceType
+  sourceEntityType String
+  sourceIdentifier String
+  localEntityType  String
+  localEntityId    String
+  metadata         Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([sourceType, sourceEntityType, sourceIdentifier])
+}

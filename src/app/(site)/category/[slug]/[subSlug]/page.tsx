@@ -1,0 +1,50 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { BreadcrumbTrail } from "@/components/shared/breadcrumb-trail";
+import { StoryCard } from "@/components/shared/story-card";
+import { getSubCategoryPageData } from "@/server/cms/public";
+
+export const revalidate = 300;
+
+type Props = {
+  params: Promise<{ slug: string; subSlug: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug, subSlug } = await params;
+  const data = await getSubCategoryPageData(slug, subSlug);
+  if (!data?.activeSubCategory) return {};
+
+  return {
+    title: `${data.activeSubCategory.name} | ${data.category.name}`,
+    description: `Coverage from ${data.activeSubCategory.name} within ${data.category.name}.`,
+  };
+}
+
+export default async function SubCategoryPage({ params }: Props) {
+  const { slug, subSlug } = await params;
+  const data = await getSubCategoryPageData(slug, subSlug);
+  if (!data?.activeSubCategory) notFound();
+
+  return (
+    <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 lg:px-6">
+      <BreadcrumbTrail
+        items={[
+          { label: "Home", href: "/" },
+          { label: data.category.name, href: `/category/${data.category.slug}` },
+          { label: data.activeSubCategory.name },
+        ]}
+      />
+      <div className="space-y-3">
+        <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Subsection</div>
+        <h1 className="font-serif text-4xl font-black tracking-tight">{data.activeSubCategory.name}</h1>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {data.articles.map((article) => (
+          <StoryCard key={article.slug} article={article} />
+        ))}
+      </div>
+    </main>
+  );
+}
