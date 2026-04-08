@@ -6,7 +6,7 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cn(
-        "rounded-[var(--radius)] border border-border/70 bg-white/95 shadow-[0_12px_32px_rgba(17,17,17,0.06)]",
+        "min-w-0 rounded-[var(--radius)] border border-border/70 bg-white/95 shadow-[0_12px_32px_rgba(17,17,17,0.06)]",
         className,
       )}
       {...props}
@@ -35,10 +35,9 @@ export function CardDescription({
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-6 pt-0", className)} {...props} />;
+  return <div className={cn("min-w-0 p-6 pt-0", className)} {...props} />;
 }
 
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("flex items-center gap-3 p-6 pt-0", className)} {...props} />;
 }
-

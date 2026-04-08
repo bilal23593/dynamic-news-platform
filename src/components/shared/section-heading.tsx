@@ -22,21 +22,21 @@ export function SectionHeading({
   linkClassName?: string;
 }) {
   return (
-    <div className={cn("flex items-end justify-between gap-4", className)}>
+    <div className={cn("flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4", className)}>
       <div className="space-y-2">
         {eyebrow ? (
           <div className={cn("text-[11px] font-bold uppercase tracking-[0.2em] text-primary", eyebrowClassName)}>
             {eyebrow}
           </div>
         ) : null}
-        <h2 className={cn("font-serif text-3xl font-black tracking-tight text-foreground", titleClassName)}>
+        <h2 className={cn("font-serif text-[1.8rem] font-black tracking-tight text-foreground sm:text-3xl", titleClassName)}>
           {title}
         </h2>
       </div>
       {href ? (
         <a
           href={href}
-          className={cn("inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-[#8d0f17]", linkClassName)}
+          className={cn("inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:text-[#8d0f17]", linkClassName)}
         >
           {linkLabel}
           <ChevronRight className="h-4 w-4" />

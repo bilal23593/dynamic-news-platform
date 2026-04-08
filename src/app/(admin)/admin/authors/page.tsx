@@ -35,12 +35,12 @@ export default async function AuthorsPage({ searchParams }: Props) {
 
   return (
     <AdminShell title="Authors" description="Manage bylines, bios, optional user links, and avatar assets.">
-      <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-        <Card>
+      <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>{selected ? "Edit Author" : "New Author"}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             <form action={saveAuthorAction} className="grid gap-4">
               <input type="hidden" name="id" value={selected?.id || ""} />
               <div className="grid gap-2">
@@ -69,7 +69,7 @@ export default async function AuthorsPage({ searchParams }: Props) {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="userId">Linked user</Label>
-                <select id="userId" name="userId" defaultValue={selected?.userId || ""} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+                <select id="userId" name="userId" defaultValue={selected?.userId || ""} className="h-11 w-full min-w-0 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
                   <option value="">No linked user</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -80,7 +80,7 @@ export default async function AuthorsPage({ searchParams }: Props) {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="avatarId">Avatar media</Label>
-                <select id="avatarId" name="avatarId" defaultValue={selected?.avatarId || ""} className="h-11 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
+                <select id="avatarId" name="avatarId" defaultValue={selected?.avatarId || ""} className="h-11 w-full min-w-0 rounded-[calc(var(--radius)-2px)] border border-border bg-white px-3">
                   <option value="">No avatar</option>
                   {media.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -94,11 +94,11 @@ export default async function AuthorsPage({ searchParams }: Props) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Author Directory</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             <Table>
               <TableHeader>
                 <TableRow>

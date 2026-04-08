@@ -262,7 +262,7 @@ export async function getHomepageData() {
   return withFallback(
     () =>
       withCachedQuery(
-        ["public-homepage-data"],
+        ["public-homepage-data-v2"],
         [
           CMS_CACHE_TAGS.articles,
           CMS_CACHE_TAGS.ads,

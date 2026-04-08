@@ -82,7 +82,7 @@ export default async function ArticlePage({ params }: Props) {
   const enrichedArticleHtml = injectAdSlotsIntoHtml(article.contentHtml, inlineAds);
 
   return (
-    <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 lg:px-6">
+    <main className="mx-auto max-w-7xl space-y-6 px-4 py-4 lg:space-y-8 lg:px-6 lg:py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <BreadcrumbTrail
         items={[
@@ -96,24 +96,43 @@ export default async function ArticlePage({ params }: Props) {
                 },
               ]
             : []),
-          { label: article.title },
         ]}
       />
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <article className="space-y-8">
-          <header className="space-y-5">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-8">
+        <article className="space-y-6 sm:space-y-8">
+          <header className="space-y-4 sm:space-y-5">
             <div className="flex flex-wrap gap-2">
               <Badge>{article.category.label || article.category.name}</Badge>
               {article.breakingNews ? <Badge variant="destructive">Breaking</Badge> : null}
               {article.trending ? <Badge variant="dark">Trending</Badge> : null}
             </div>
-            <h1 className="font-serif text-4xl font-black tracking-tight lg:text-6xl">{article.title}</h1>
-            {article.subtitle ? <p className="text-xl leading-8 text-muted-foreground">{article.subtitle}</p> : null}
-            <div className="flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              <span>{article.author.displayName}</span>
-              <span>{formatDate(article.publishAt)}</span>
-              <span>{article.readTime} min read</span>
+            <h1 className="max-w-[22ch] text-balance font-serif text-[2.85rem] font-black tracking-tight leading-[0.95] sm:text-5xl xl:text-[4.6rem] xl:leading-[0.95]">
+              {article.title}
+            </h1>
+            {article.subtitle ? (
+              <p className="max-w-[42rem] text-lg leading-8 text-muted-foreground sm:text-[1.35rem] sm:leading-9">
+                {article.subtitle}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius)] border border-border/70 bg-white/85 px-4 py-3 sm:gap-4">
+              {article.author.avatarUrl ? (
+                <Image
+                  src={article.author.avatarUrl}
+                  alt={article.author.displayName}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded-full object-cover"
+                />
+              ) : null}
+              <div className="min-w-0 space-y-1">
+                <div className="text-sm font-semibold text-foreground">{article.author.displayName}</div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                  <span>{formatDate(article.publishAt)}</span>
+                  <span>{article.readTime} min read</span>
+                  <span>{article.category.name}</span>
+                </div>
+              </div>
             </div>
             <ShareButtons path={`/article/${article.slug}`} title={article.title} />
           </header>
@@ -134,14 +153,18 @@ export default async function ArticlePage({ params }: Props) {
             </figure>
           ) : null}
 
-          <div className="editorial-surface rounded-[var(--radius)] p-6 lg:p-8">
+          <div className="editorial-surface rounded-[var(--radius)] border border-border/60 p-4 sm:p-7 lg:p-10">
+            <div className="mb-5 rounded-[calc(var(--radius)-4px)] border border-border/70 bg-accent/45 px-4 py-4 sm:mb-6 sm:px-5">
+              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">What To Know</div>
+              <p className="mt-2 text-base leading-8 text-foreground sm:text-lg">{article.excerpt}</p>
+            </div>
             <div
               className="story-copy"
               dangerouslySetInnerHTML={{ __html: enrichedArticleHtml }}
             />
           </div>
 
-          <section className="space-y-4 rounded-[var(--radius)] border border-border/70 bg-white p-6">
+          <section className="space-y-4 rounded-[var(--radius)] border border-border/70 bg-white p-4 sm:p-6">
             <SectionHeading title="Comments" eyebrow="Community" />
             {article.comments.length ? (
               <div className="space-y-4">
@@ -161,11 +184,11 @@ export default async function ArticlePage({ params }: Props) {
           </section>
         </article>
 
-        <aside className="space-y-6">
+        <aside className="space-y-5 sm:space-y-6 xl:sticky xl:top-24 xl:self-start">
           {sidebarAds.map((slot) => (
             <AdSlotBlock key={slot.key} slot={slot} title={slot.sponsorLabel || "Sponsored"} />
           ))}
-          <section className="rounded-[var(--radius)] border border-border/70 bg-white p-6">
+          <section className="rounded-[var(--radius)] border border-border/70 bg-white p-4 sm:p-6">
             <SectionHeading title="Newsletter" eyebrow="Briefing" />
             <p className="mb-4 text-sm leading-7 text-muted-foreground">
               Get the morning rundown with top stories, weather, and what to watch before your day starts.

@@ -7,8 +7,8 @@ export function ShareButtons({ path, title }: { path: string; title: string }) {
   const encodedTitle = encodeURIComponent(title);
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button asChild variant="outline" size="sm">
+    <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+      <Button asChild variant="outline" size="sm" className="w-full">
         <a
           href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
           target="_blank"
@@ -17,7 +17,7 @@ export function ShareButtons({ path, title }: { path: string; title: string }) {
           Share on X
         </a>
       </Button>
-      <Button asChild variant="outline" size="sm">
+      <Button asChild variant="outline" size="sm" className="w-full">
         <a
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
           target="_blank"
@@ -26,7 +26,7 @@ export function ShareButtons({ path, title }: { path: string; title: string }) {
           Facebook
         </a>
       </Button>
-      <Button asChild variant="outline" size="sm">
+      <Button asChild variant="outline" size="sm" className="w-full">
         <a href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}>Email</a>
       </Button>
     </div>
