@@ -2,14 +2,18 @@ import type { Metadata } from "next";
 
 import { SectionHeading } from "@/components/shared/section-heading";
 import { StoryCard } from "@/components/shared/story-card";
+import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getVideoHighlights } from "@/server/cms/public";
+import { siteConfig } from "@/config/site";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildSeoMetadata({
   title: "Video Highlights",
   description: "Forecasts, explainers, and newsroom video coverage from Redwire Daily.",
-};
+  path: "/videos",
+  keywords: buildKeywords(siteConfig.defaultKeywords, ["video highlights", "news video", "live coverage"]),
+});
 
 export default async function VideosPage() {
   const videos = await getVideoHighlights();

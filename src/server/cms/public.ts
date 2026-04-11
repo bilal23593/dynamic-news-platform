@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 
 import { demoAdSlots, demoArticles, demoAuthors, demoCategories, demoComments, demoHomepageSections, demoPages, demoRedirects, demoTags } from "@/config/demo-newsroom";
 import { isRenderableAdSlot } from "@/lib/ads";
+import { sortNavigationCategories } from "@/lib/category-navigation";
 import { selectAutomaticHomepageItems } from "@/lib/homepage-selection";
 import { resolveRelatedStories } from "@/lib/related-content";
 import type {
@@ -86,6 +87,7 @@ function mapDemoArticle(article: (typeof demoArticles)[number]): PublicArticleSu
     subtitle: article.subtitle,
     excerpt: article.excerpt,
     publishAt: article.publishAt,
+    updatedAt: article.publishAt,
     featuredImageUrl: article.imageUrl,
     imageCaption: "Demo newsroom illustration.",
     videoEmbedUrl: article.videoEmbedUrl,
@@ -107,6 +109,7 @@ function mapDemoArticle(article: (typeof demoArticles)[number]): PublicArticleSu
     tags: article.tagSlugs.map(mapDemoTag),
     seoTitle: article.seoTitle,
     metaDescription: article.metaDescription,
+    schemaType: article.schemaType,
   };
 }
 
@@ -118,6 +121,7 @@ function mapPrismaArticle(article: ArticleWithRelations): PublicArticleSummary {
     subtitle: article.subtitle,
     excerpt: article.excerpt,
     publishAt: article.publishAt,
+    updatedAt: article.updatedAt,
     featuredImageUrl: article.featuredImage?.url,
     featuredImageAlt: article.featuredImage?.altText,
     imageCaption: article.imageCaption,
@@ -158,6 +162,7 @@ function mapPrismaArticle(article: ArticleWithRelations): PublicArticleSummary {
     })),
     seoTitle: article.seoTitle,
     metaDescription: article.metaDescription,
+    schemaType: article.schemaType,
   };
 }
 
@@ -179,6 +184,19 @@ function mapSectionSettings(value: Prisma.JsonValue | null | undefined): Homepag
     ctaLabel: typeof settings.ctaLabel === "string" ? settings.ctaLabel : undefined,
     ctaHref: typeof settings.ctaHref === "string" ? settings.ctaHref : undefined,
   };
+}
+
+function removeUsedSectionItems(items: PublicArticleSummary[], usedSlugs: Set<string>) {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    if (usedSlugs.has(item.slug) || seen.has(item.slug)) {
+      return false;
+    }
+
+    seen.add(item.slug);
+    return true;
+  });
 }
 
 function mapPrismaAdSlot(slot: {
@@ -250,6 +268,34 @@ async function withFallback<T>(query: () => Promise<T>, fallback: () => T) {
   }
 }
 
+function isRetryableCmsError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+
+  const maybeCode = "code" in error ? String((error as { code?: unknown }).code || "") : "";
+  const message = error instanceof Error ? error.message : String(error);
+
+  return maybeCode === "P1001" || maybeCode === "P2028" || /can't reach database server|transaction not found|connection|timeout/i.test(message);
+}
+
+async function withCmsQueryRetries<T>(query: () => Promise<T>, attempts = 3): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await query();
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts || !isRetryableCmsError(error)) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, attempt * 150));
+    }
+  }
+
+  throw lastError;
+}
+
 async function withCachedQuery<T>(
   keyParts: string[],
   tags: string[],
@@ -307,6 +353,7 @@ export async function getHomepageData() {
       const latest = mappedPool.slice(0, 12);
       const mostReadItems = mostRead.map(mapPrismaArticle);
 
+      const usedSlugs = new Set<string>();
       const mappedSections: HomepageSectionData[] = sections.map((section) => {
         let items =
           section.sourceType === "MANUAL"
@@ -326,8 +373,14 @@ export async function getHomepageData() {
               all: mappedPool,
               mostRead: mostReadItems,
             },
+            {
+              excludeSlugs: usedSlugs,
+            },
           );
         }
+
+        items = removeUsedSectionItems(items, usedSlugs);
+        items.forEach((item) => usedSlugs.add(item.slug));
 
         return {
           key: section.key,
@@ -355,16 +408,13 @@ export async function getHomepageData() {
     () => {
       const latest = demoArticles.map(mapDemoArticle);
       const mostRead = latest.filter((item) => item.popular).concat(latest).slice(0, 12);
-      const sections: HomepageSectionData[] = demoHomepageSections.map((section) => ({
-        key: section.key,
-        type: section.type,
-        title: section.title,
-        description: section.description,
-        items:
+      const usedSlugs = new Set<string>();
+      const sections: HomepageSectionData[] = demoHomepageSections.map((section) => {
+        let items =
           section.sourceType === "MANUAL" && section.manualArticleSlugs?.length
-            ? section.manualArticleSlugs
+            ? (section.manualArticleSlugs
                 .map((slug) => latest.find((item) => item.slug === slug))
-                .filter(Boolean) as PublicArticleSummary[]
+                .filter(Boolean) as PublicArticleSummary[])
             : selectAutomaticHomepageItems(
                 {
                   type: section.type,
@@ -377,10 +427,24 @@ export async function getHomepageData() {
                   all: latest,
                   mostRead,
                 },
-              ),
-        adSlot: section.adSlotKey ? mapDemoAdSlot(section.adSlotKey) : null,
-        settings: section.settings || null,
-      }));
+                {
+                  excludeSlugs: usedSlugs,
+                },
+              );
+
+        items = removeUsedSectionItems(items, usedSlugs);
+        items.forEach((item) => usedSlugs.add(item.slug));
+
+        return {
+          key: section.key,
+          type: section.type,
+          title: section.title,
+          description: section.description,
+          items,
+          adSlot: section.adSlotKey ? mapDemoAdSlot(section.adSlotKey) : null,
+          settings: section.settings || null,
+        };
+      });
 
       return {
         sections,
@@ -412,20 +476,85 @@ export async function getLatestArticles(limit = 12) {
   );
 }
 
-export async function getArticleBySlug(slug: string): Promise<PublicArticleDetail | null> {
-  return withFallback(
-    () =>
-      withCachedQuery(
-        ["public-article-detail", slug],
-        [
-          CMS_CACHE_TAGS.articles,
-          CMS_CACHE_TAGS.comments,
-          cmsCacheTag.article(slug),
-          cmsCacheTag.articleComments(slug),
-        ],
-        CMS_CACHE_TTL.article,
-        async () => {
-      const article = await prisma.article.findUnique({
+async function getArticleShellBySlugFromDatabase(slug: string): Promise<PublicArticleDetail | null> {
+  const article =
+    (await withCmsQueryRetries(() =>
+      prisma.article.findUnique({
+        where: { slug },
+        include: publicArticleInclude,
+      }),
+    )) ||
+    (await withCmsQueryRetries(() =>
+      prisma.article.findFirst({
+        where: { legacySlug: slug },
+        include: publicArticleInclude,
+      }),
+    ));
+
+  if (!article) return null;
+
+  const base = mapPrismaArticle(article);
+  return {
+    ...base,
+    contentHtml: article.contentHtml,
+    canonicalUrl: article.canonicalUrl,
+    allowComments: article.allowComments,
+    related: [],
+    comments: [],
+  };
+}
+
+async function getArticleBySlugMinimal(slug: string): Promise<PublicArticleDetail | null> {
+  const article =
+    (await withCmsQueryRetries(() =>
+      prisma.article.findUnique({
+        where: { slug },
+        include: {
+          ...publicArticleInclude,
+          comments: {
+            where: { status: "APPROVED" },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+          },
+        },
+      }),
+    )) ||
+    (await withCmsQueryRetries(() =>
+      prisma.article.findFirst({
+        where: { legacySlug: slug },
+        include: {
+          ...publicArticleInclude,
+          comments: {
+            where: { status: "APPROVED" },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+          },
+        },
+      }),
+    ));
+
+  if (!article) return null;
+
+  const base = mapPrismaArticle(article);
+  return {
+    ...base,
+    contentHtml: article.contentHtml,
+    canonicalUrl: article.canonicalUrl,
+    allowComments: article.allowComments,
+    related: [],
+    comments: article.comments.map<PublicComment>((comment) => ({
+      id: comment.id,
+      authorName: comment.authorName,
+      content: comment.content,
+      createdAt: comment.createdAt,
+    })),
+  };
+}
+
+async function getArticleBySlugFromDatabase(slug: string): Promise<PublicArticleDetail | null> {
+  const article =
+    (await withCmsQueryRetries(() =>
+      prisma.article.findUnique({
         where: { slug },
         include: {
           ...publicArticleInclude,
@@ -443,113 +572,176 @@ export async function getArticleBySlug(slug: string): Promise<PublicArticleDetai
             },
           },
         },
-      });
-
-      if (!article) return null;
-
-      const base = mapPrismaArticle(article);
-      const manualRelated = article.relatedFrom
-        .filter((relation) => relation.targetArticle.status === "PUBLISHED")
-        .map((relation) => mapPrismaArticle(relation.targetArticle));
-      const excludedIds = [article.id, ...manualRelated.map((item) => item.id).filter(Boolean)] as string[];
-      const tagIds = article.tags.map((item) => item.tagId);
-
-      const [sharedTagCandidates, categoryCandidates, latestCandidates] = await Promise.all([
-        tagIds.length
-          ? prisma.article.findMany({
-              where: {
-                id: { notIn: excludedIds },
-                status: "PUBLISHED",
-                tags: { some: { tagId: { in: tagIds } } },
+      }),
+    )) ||
+    (await withCmsQueryRetries(() =>
+      prisma.article.findFirst({
+        where: { legacySlug: slug },
+        include: {
+          ...publicArticleInclude,
+          comments: {
+            where: { status: "APPROVED" },
+            orderBy: { createdAt: "desc" },
+          },
+          relatedFrom: {
+            orderBy: { sortOrder: "asc" },
+            take: 12,
+            include: {
+              targetArticle: {
+                include: publicArticleInclude,
               },
-              include: publicArticleInclude,
-              orderBy: [{ publishAt: "desc" }, { viewCount: "desc" }],
-              take: 18,
-            })
-          : Promise.resolve([]),
-        prisma.article.findMany({
-          where: {
-            id: { notIn: excludedIds },
-            status: "PUBLISHED",
-            OR: [
-              ...(article.subCategoryId
-                ? [{ subCategoryId: article.subCategoryId } as const]
-                : []),
-              { categoryId: article.categoryId },
-            ],
+            },
           },
-          include: publicArticleInclude,
-          orderBy: [{ publishAt: "desc" }, { viewCount: "desc" }],
-          take: 18,
-        }),
-        prisma.article.findMany({
-          where: {
-            id: { notIn: excludedIds },
-            status: "PUBLISHED",
-          },
-          include: publicArticleInclude,
-          orderBy: [
-            { featured: "desc" },
-            { trending: "desc" },
-            { popular: "desc" },
-            { publishAt: "desc" },
+        },
+      }),
+    ));
+
+  if (!article) return null;
+
+  const base = mapPrismaArticle(article);
+  const manualRelated = article.relatedFrom
+    .filter((relation) => relation.targetArticle.status === "PUBLISHED")
+    .map((relation) => mapPrismaArticle(relation.targetArticle));
+  const excludedIds = [article.id, ...manualRelated.map((item) => item.id).filter(Boolean)] as string[];
+  const tagIds = article.tags.map((item) => item.tagId);
+
+  const [sharedTagCandidates, categoryCandidates, latestCandidates] = await Promise.all([
+    tagIds.length
+      ? withCmsQueryRetries(() =>
+          prisma.article.findMany({
+            where: {
+              id: { notIn: excludedIds },
+              status: "PUBLISHED",
+              tags: { some: { tagId: { in: tagIds } } },
+            },
+            include: publicArticleInclude,
+            orderBy: [{ publishAt: "desc" }, { viewCount: "desc" }],
+            take: 18,
+          }),
+        )
+      : Promise.resolve([]),
+    withCmsQueryRetries(() =>
+      prisma.article.findMany({
+        where: {
+          id: { notIn: excludedIds },
+          status: "PUBLISHED",
+          OR: [
+            ...(article.subCategoryId
+              ? [{ subCategoryId: article.subCategoryId } as const]
+              : []),
+            { categoryId: article.categoryId },
           ],
-          take: 18,
-        }),
-      ]);
+        },
+        include: publicArticleInclude,
+        orderBy: [{ publishAt: "desc" }, { viewCount: "desc" }],
+        take: 18,
+      }),
+    ),
+    withCmsQueryRetries(() =>
+      prisma.article.findMany({
+        where: {
+          id: { notIn: excludedIds },
+          status: "PUBLISHED",
+        },
+        include: publicArticleInclude,
+        orderBy: [
+          { featured: "desc" },
+          { trending: "desc" },
+          { popular: "desc" },
+          { publishAt: "desc" },
+        ],
+        take: 18,
+      }),
+    ),
+  ]);
 
-      const related = resolveRelatedStories({
-        article: base,
-        manual: manualRelated,
-        automatic: [...sharedTagCandidates, ...categoryCandidates, ...latestCandidates].map(mapPrismaArticle),
-        mode: article.relatedContentMode,
-        limit: article.relatedContentLimit,
-      });
+  const related = resolveRelatedStories({
+    article: base,
+    manual: manualRelated,
+    automatic: [...sharedTagCandidates, ...categoryCandidates, ...latestCandidates].map(mapPrismaArticle),
+    mode: article.relatedContentMode,
+    limit: article.relatedContentLimit,
+  });
 
-      return {
-        ...base,
-        contentHtml: article.contentHtml,
-        canonicalUrl: article.canonicalUrl,
-        allowComments: article.allowComments,
-        related,
-        comments: article.comments.map<PublicComment>((comment) => ({
-          id: comment.id,
-          authorName: comment.authorName,
-          content: comment.content,
-          createdAt: comment.createdAt,
-        })),
-      };
+  return {
+    ...base,
+    contentHtml: article.contentHtml,
+    canonicalUrl: article.canonicalUrl,
+    allowComments: article.allowComments,
+    related,
+    comments: article.comments.map<PublicComment>((comment) => ({
+      id: comment.id,
+      authorName: comment.authorName,
+      content: comment.content,
+      createdAt: comment.createdAt,
+    })),
+  };
+}
+
+function getDemoArticleBySlug(slug: string): PublicArticleDetail | null {
+  const article = demoArticles.find((item) => item.slug === slug);
+  if (!article) return null;
+  const base = mapDemoArticle(article);
+  const automaticPool = demoArticles
+    .filter((item) => item.slug !== slug)
+    .map(mapDemoArticle);
+  return {
+    ...base,
+    contentHtml: article.contentHtml,
+    canonicalUrl: null,
+    allowComments: true,
+    related: resolveRelatedStories({
+      article: base,
+      manual: [],
+      automatic: automaticPool,
+      mode: "HYBRID",
+      limit: 4,
+    }),
+    comments: demoComments
+      .filter((comment) => comment.articleSlug === slug && comment.status === "APPROVED")
+      .map((comment, index) => ({
+        id: `${slug}-${index}`,
+        authorName: comment.authorName,
+        content: comment.content,
+        createdAt: new Date(),
+      })),
+  };
+}
+
+export async function getArticleShellBySlug(slug: string): Promise<PublicArticleDetail | null> {
+  return withFallback(
+    () =>
+      withCachedQuery(
+        ["public-article-shell-v1", slug],
+        [CMS_CACHE_TAGS.articles, cmsCacheTag.article(slug)],
+        CMS_CACHE_TTL.article,
+        async () => getArticleShellBySlugFromDatabase(slug),
+      ),
+    () => getDemoArticleBySlug(slug),
+  );
+}
+
+export async function getArticleBySlug(slug: string): Promise<PublicArticleDetail | null> {
+  return withFallback(
+    () =>
+      withCachedQuery(
+        ["public-article-detail-v1", slug],
+        [
+          CMS_CACHE_TAGS.articles,
+          CMS_CACHE_TAGS.comments,
+          cmsCacheTag.article(slug),
+          cmsCacheTag.articleComments(slug),
+        ],
+        CMS_CACHE_TTL.article,
+        async () => {
+          try {
+            return await getArticleBySlugFromDatabase(slug);
+          } catch {
+            return await getArticleBySlugMinimal(slug);
+          }
         },
       ),
-    () => {
-      const article = demoArticles.find((item) => item.slug === slug);
-      if (!article) return null;
-      const base = mapDemoArticle(article);
-      const automaticPool = demoArticles
-        .filter((item) => item.slug !== slug)
-        .map(mapDemoArticle);
-      return {
-        ...base,
-        contentHtml: article.contentHtml,
-        canonicalUrl: null,
-        allowComments: true,
-        related: resolveRelatedStories({
-          article: base,
-          manual: [],
-          automatic: automaticPool,
-          mode: "HYBRID",
-          limit: 4,
-        }),
-        comments: demoComments
-          .filter((comment) => comment.articleSlug === slug && comment.status === "APPROVED")
-          .map((comment, index) => ({
-            id: `${slug}-${index}`,
-            authorName: comment.authorName,
-            content: comment.content,
-            createdAt: new Date(),
-          })),
-      };
-    },
+    () => getDemoArticleBySlug(slug),
   );
 }
 
@@ -746,6 +938,8 @@ export async function getPublishedPageBySlug(slug: string): Promise<PublicPage |
         contentHtml: page.contentHtml,
         seoTitle: page.seoTitle,
         metaDescription: page.metaDescription,
+        canonicalUrl: page.canonicalUrl,
+        schemaType: page.schemaType,
       };
         },
       ),
@@ -760,6 +954,8 @@ export async function getPublishedPageBySlug(slug: string): Promise<PublicPage |
         contentHtml: page.contentHtml,
         seoTitle: page.seoTitle,
         metaDescription: page.metaDescription,
+        canonicalUrl: null,
+        schemaType: "WebPage",
       };
     },
   );
@@ -972,14 +1168,21 @@ export async function getNavigationCategories() {
         ["public-navigation-categories"],
         [CMS_CACHE_TAGS.categories, CMS_CACHE_TAGS.chrome],
         CMS_CACHE_TTL.chrome,
-        () =>
-          prisma.category.findMany({
-            orderBy: { sortOrder: "asc" },
-            take: 8,
-            select: { name: true, slug: true },
-          }),
+        async () =>
+          sortNavigationCategories(
+            await prisma.category.findMany({
+              where: {
+                articles: {
+                  some: {
+                    status: "PUBLISHED",
+                  },
+                },
+              },
+              select: { name: true, slug: true, label: true, sortOrder: true },
+            }),
+          ),
       ),
-    () => demoCategories.map((category) => ({ name: category.name, slug: category.slug })),
+    () => sortNavigationCategories(demoCategories.map((category) => ({ name: category.name, slug: category.slug, label: category.label }))),
   );
 }
 
@@ -993,9 +1196,14 @@ export async function getSiteChromeData() {
         async () => {
       const [categories, ads] = await Promise.all([
         prisma.category.findMany({
-          orderBy: { sortOrder: "asc" },
-          take: 8,
-          select: { name: true, slug: true },
+          where: {
+            articles: {
+              some: {
+                status: "PUBLISHED",
+              },
+            },
+          },
+          select: { name: true, slug: true, label: true, sortOrder: true },
         }),
         prisma.adSlot.findMany({
           where: {
@@ -1011,14 +1219,16 @@ export async function getSiteChromeData() {
       const footerSlot = ads.find((slot) => slot.placement === "FOOTER");
 
       return {
-        categories,
+        categories: sortNavigationCategories(categories),
         headerAd: headerSlot ? mapPrismaAdSlot(headerSlot) : null,
         footerAd: footerSlot ? mapPrismaAdSlot(footerSlot) : null,
       };
         },
       ),
     () => ({
-      categories: demoCategories.map((category) => ({ name: category.name, slug: category.slug })),
+      categories: sortNavigationCategories(
+        demoCategories.map((category) => ({ name: category.name, slug: category.slug, label: category.label })),
+      ),
       headerAd: null,
       footerAd: null,
     }),

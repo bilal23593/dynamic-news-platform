@@ -13,6 +13,10 @@ type HomepageSelectionContext = {
   mostRead: PublicArticleSummary[];
 };
 
+type HomepageSelectionOptions = {
+  excludeSlugs?: Set<string>;
+};
+
 export const homepageSelectionRules = [
   {
     section: "Top Stories / Hero",
@@ -185,11 +189,20 @@ function uniqueBySlug(items: PublicArticleSummary[]) {
   });
 }
 
+function excludeUsed(items: PublicArticleSummary[], excludeSlugs?: Set<string>) {
+  if (!excludeSlugs?.size) {
+    return items;
+  }
+
+  return items.filter((item) => !excludeSlugs.has(item.slug));
+}
+
 export function selectAutomaticHomepageItems(
   section: AutomaticSectionInput,
   context: HomepageSelectionContext,
+  options?: HomepageSelectionOptions,
 ) {
-  const latest = sortNewest(context.all);
+  const latest = excludeUsed(sortNewest(context.all), options?.excludeSlugs);
   const limit = section.limit;
 
   if (section.type === "HERO") {
@@ -198,7 +211,7 @@ export function selectAutomaticHomepageItems(
     );
 
     return uniqueBySlug(
-      sortTopStories(candidates).concat(latest),
+      excludeUsed(sortTopStories(candidates), options?.excludeSlugs).concat(latest),
     ).slice(0, limit);
   }
 
@@ -206,26 +219,34 @@ export function selectAutomaticHomepageItems(
     case "LATEST":
       return latest.slice(0, limit);
     case "BREAKING":
-      return sortNewest(context.all.filter((item) => item.breakingNews)).slice(0, limit);
+      return excludeUsed(sortNewest(context.all.filter((item) => item.breakingNews)), options?.excludeSlugs).slice(0, limit);
     case "TRENDING": {
-      const candidates = context.all.filter((item) => item.trending);
+      const candidates = excludeUsed(context.all.filter((item) => item.trending), options?.excludeSlugs);
       return uniqueBySlug(sortTrending(candidates).concat(sortTopStories(latest))).slice(0, limit);
     }
     case "MOST_READ":
-      return uniqueBySlug(sortMostRead(context.mostRead).concat(sortMostRead(context.all))).slice(0, limit);
+      return uniqueBySlug(
+        excludeUsed(sortMostRead(context.mostRead), options?.excludeSlugs).concat(latest),
+      ).slice(0, limit);
     case "FEATURED": {
-      const candidates = context.all.filter((item) => item.featured);
+      const candidates = excludeUsed(context.all.filter((item) => item.featured), options?.excludeSlugs);
       return uniqueBySlug(sortNewest(candidates).concat(latest)).slice(0, limit);
     }
     case "VIDEO":
-      return sortNewest(context.all.filter((item) => Boolean(item.videoEmbedUrl))).slice(0, limit);
+      return excludeUsed(
+        sortNewest(context.all.filter((item) => Boolean(item.videoEmbedUrl))),
+        options?.excludeSlugs,
+      ).slice(0, limit);
     case "CATEGORY":
       return sortNewest(
-        context.all.filter((item) => item.category.id === section.categoryId),
+        excludeUsed(context.all.filter((item) => item.category.id === section.categoryId), options?.excludeSlugs),
       ).slice(0, limit);
     case "TAG":
       return sortNewest(
-        context.all.filter((item) => item.tags.some((tag) => tag.id === section.tagId)),
+        excludeUsed(
+          context.all.filter((item) => item.tags.some((tag) => tag.id === section.tagId)),
+          options?.excludeSlugs,
+        ),
       ).slice(0, limit);
     default:
       return [];

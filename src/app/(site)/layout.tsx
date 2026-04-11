@@ -9,7 +9,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     <>
       <PublicHeader categories={categories} headerAd={headerAd} />
       <div className="min-h-[60vh]">{children}</div>
-      <PublicFooter footerAd={footerAd} />
+      <PublicFooter footerAd={footerAd} categories={categories} />
     </>
   );
 }

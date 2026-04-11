@@ -1,10 +1,12 @@
 import type { Prisma } from "@prisma/client";
+import { resolveCategoryNavigationMeta } from "@/lib/category-navigation";
 import { prisma } from "@/server/prisma";
 import { parseWordpressCsv } from "@/lib/wordpress-import/parsers/csv";
 import { parseWordpressJson } from "@/lib/wordpress-import/parsers/json";
 import { parseWordpressXml } from "@/lib/wordpress-import/parsers/xml";
 import { mapWordpressAuthors } from "@/lib/wordpress-import/mappers/authors";
 import { mapWordpressCategories } from "@/lib/wordpress-import/mappers/categories";
+import { inferImportedArticleCategory } from "@/lib/wordpress-import/services/category-inference";
 import { transformWordpressHtmlToEditorBlocks } from "@/lib/wordpress-import/transformers/html";
 import type { WordpressDryRunResult, WordpressImportInput, WordpressPostRecord } from "@/lib/wordpress-import/types";
 import { slugify } from "@/lib/utils";
@@ -94,12 +96,18 @@ export async function importPostsFromWordpress(input: WordpressImportInput, init
 
   const categoryMap = new Map<string, string>();
   for (const category of categories) {
+    const normalizedCategory = resolveCategoryNavigationMeta(category);
     const created = await prisma.category.upsert({
-      where: { slug: category.slug },
-      update: { name: category.name },
-      create: { name: category.name, slug: category.slug },
+      where: { slug: normalizedCategory.slug },
+      update: { name: normalizedCategory.name, label: normalizedCategory.label, sortOrder: normalizedCategory.sortOrder },
+      create: {
+        name: normalizedCategory.name,
+        slug: normalizedCategory.slug,
+        label: normalizedCategory.label,
+        sortOrder: normalizedCategory.sortOrder,
+      },
     });
-    categoryMap.set(category.slug, created.id);
+    categoryMap.set(normalizedCategory.slug, created.id);
   }
 
   const tagMap = new Map<string, string>();
@@ -143,6 +151,15 @@ export async function importPostsFromWordpress(input: WordpressImportInput, init
     const transformed = transformWordpressHtmlToEditorBlocks(post.html);
     const primaryCategory = post.categories.find((item) => item.domain === "category");
     const authorSlug = slugify(post.authorName || "imported-author");
+    const inferredCategory = inferImportedArticleCategory({
+      title: post.title,
+      excerpt: post.excerpt,
+      contentText: transformed.text,
+      currentCategorySlug: primaryCategory?.slug || null,
+      tagSlugs: post.categories.filter((item) => item.domain === "post_tag").map((item) => item.slug || slugify(item.name)),
+      tagNames: post.categories.filter((item) => item.domain === "post_tag").map((item) => item.name),
+    });
+    const resolvedCategorySlug = inferredCategory.resolvedCategorySlug || primaryCategory?.slug || "";
     const article = await prisma.article.create({
       data: {
         importBatchId: batch.id,
@@ -156,7 +173,7 @@ export async function importPostsFromWordpress(input: WordpressImportInput, init
         contentJson: transformed.json as Prisma.InputJsonValue,
         contentText: transformed.text,
         featuredImageId: post.featuredImageUrl ? mediaMap.get(post.featuredImageUrl) : undefined,
-        categoryId: categoryMap.get(primaryCategory?.slug || "") || (await prisma.category.findFirst({ select: { id: true } }))!.id,
+        categoryId: categoryMap.get(resolvedCategorySlug) || categoryMap.get(primaryCategory?.slug || "") || (await prisma.category.findFirst({ select: { id: true } }))!.id,
         authorId: authorMap.get(authorSlug) || (await prisma.authorProfile.findFirst({ select: { id: true } }))!.id,
         status: post.status === "publish" ? "PUBLISHED" : "DRAFT",
         publishAt: post.publishDate ? new Date(post.publishDate) : new Date(),

@@ -105,6 +105,8 @@ select {
   line-height: 1.92;
   hanging-punctuation: first last;
   text-wrap: pretty;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .story-copy h2,
@@ -184,6 +186,8 @@ select {
 
 .story-copy img {
   width: 100%;
+  height: auto;
+  display: block;
   border-radius: 1rem;
 }
 
@@ -196,10 +200,37 @@ select {
 
 .story-copy iframe {
   width: 100%;
+  max-width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
   border: 0;
   border-radius: 1rem;
+}
+
+.story-copy video {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+}
+
+.story-copy table,
+.story-copy pre {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.story-copy table {
+  border-collapse: collapse;
+}
+
+.story-copy th,
+.story-copy td {
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  padding: 0.75rem 0.9rem;
+  text-align: left;
 }
 
 .story-copy a {
@@ -276,6 +307,12 @@ select {
   .story-copy h3 {
     margin-top: 2rem;
     font-size: 1.28rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 

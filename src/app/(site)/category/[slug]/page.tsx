@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { BreadcrumbTrail } from "@/components/shared/breadcrumb-trail";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { StoryCard } from "@/components/shared/story-card";
+import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getCategoryPageData } from "@/server/cms/public";
 
 export const revalidate = 300;
@@ -18,10 +18,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getCategoryPageData(slug);
   if (!data) return {};
 
-  return {
+  return buildSeoMetadata({
     title: data.category.name,
     description: data.description || `Coverage from the ${data.category.name} desk.`,
-  };
+    path: `/category/${data.category.slug}`,
+    section: data.category.name,
+    keywords: buildKeywords(
+      data.category.name,
+      data.category.label,
+      data.subcategories.map((item) => item.name),
+      ["section news", "local reporting"],
+    ),
+  });
 }
 
 export default async function CategoryPage({ params }: Props) {
@@ -31,7 +39,6 @@ export default async function CategoryPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 lg:px-6">
-      <BreadcrumbTrail items={[{ label: "Home", href: "/" }, { label: data.category.name }]} />
       <SectionHeading title={data.category.name} eyebrow="Section" />
       <p className="max-w-3xl text-lg leading-8 text-muted-foreground">{data.description}</p>
       <div className="flex flex-wrap gap-2">

@@ -5,20 +5,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { StoryCard } from "@/components/shared/story-card";
+import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getSearchParam } from "@/lib/utils";
 import { searchPublishedArticlesPage } from "@/server/cms/public";
 import type { SearchParams } from "@/types";
+import { siteConfig } from "@/config/site";
 
 export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Search",
-  description: "Search stories, tags, categories, and bylines across Redwire Daily.",
-};
 
 type Props = {
   searchParams: SearchParams;
 };
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams;
+  const query = getSearchParam(params.q).trim();
+  const title = query ? `Search: ${query}` : "Search";
+  const description = query
+    ? `Search results for ${query} across stories, sections, topics, and bylines on ${siteConfig.name}.`
+    : `Search stories, tags, categories, and bylines across ${siteConfig.name}.`;
+
+  return buildSeoMetadata({
+    title,
+    description,
+    path: "/search",
+    keywords: buildKeywords(siteConfig.defaultKeywords, ["site search", query]),
+    noIndex: true,
+  });
+}
 
 export default async function SearchPage({ searchParams }: Props) {
   const params = await searchParams;

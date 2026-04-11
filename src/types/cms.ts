@@ -42,6 +42,7 @@ export type PublicArticleSummary = {
   subtitle?: string | null;
   excerpt: string;
   publishAt: Date | string;
+  updatedAt?: Date | string;
   featuredImageUrl?: string | null;
   featuredImageAlt?: string | null;
   imageCaption?: string | null;
@@ -58,6 +59,7 @@ export type PublicArticleSummary = {
   tags: PublicTag[];
   seoTitle?: string | null;
   metaDescription?: string | null;
+  schemaType?: string | null;
 };
 
 export type PublicArticleDetail = PublicArticleSummary & {
@@ -76,6 +78,8 @@ export type PublicPage = {
   contentHtml: string;
   seoTitle?: string | null;
   metaDescription?: string | null;
+  canonicalUrl?: string | null;
+  schemaType?: string | null;
 };
 
 export type PublicAdSlot = {

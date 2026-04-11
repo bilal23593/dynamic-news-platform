@@ -14,7 +14,15 @@ const footerLinks = [
   { href: "/advertise", label: "Advertise" },
 ] as const;
 
-export function PublicFooter({ footerAd }: { footerAd?: PublicAdSlot | null }) {
+export function PublicFooter({
+  footerAd,
+  categories,
+}: {
+  footerAd?: PublicAdSlot | null;
+  categories?: Array<{ name: string; slug: string; label?: string | null }>;
+}) {
+  const coverageLinks = (categories || []).slice(0, 6);
+
   return (
     <footer className="mt-20 border-t border-border/70 bg-[#111111] text-white">
       {footerAd ? (
@@ -36,9 +44,9 @@ export function PublicFooter({ footerAd }: { footerAd?: PublicAdSlot | null }) {
         <div className="space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-white/60">Coverage</h3>
           <div className="grid gap-2 text-sm text-white/80">
-            {siteConfig.navCategories.map((category) => (
-              <Link key={category} href={`/category/${category.toLowerCase().replace(/\s+/g, "-")}`}>
-                {category}
+            {coverageLinks.map((category) => (
+              <Link key={category.slug} href={`/category/${category.slug}`}>
+                {category.label || category.name}
               </Link>
             ))}
           </div>

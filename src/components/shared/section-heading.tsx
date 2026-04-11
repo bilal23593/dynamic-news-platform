@@ -1,3 +1,5 @@
+import type { Route } from "next";
+import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -21,6 +23,8 @@ export function SectionHeading({
   eyebrowClassName?: string;
   linkClassName?: string;
 }) {
+  const isInternalHref = href?.startsWith("/");
+
   return (
     <div className={cn("flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4", className)}>
       <div className="space-y-2">
@@ -34,13 +38,23 @@ export function SectionHeading({
         </h2>
       </div>
       {href ? (
-        <a
-          href={href}
-          className={cn("inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:text-[#8d0f17]", linkClassName)}
-        >
-          {linkLabel}
-          <ChevronRight className="h-4 w-4" />
-        </a>
+        isInternalHref ? (
+          <Link
+            href={href as Route}
+            className={cn("inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:text-[#8d0f17]", linkClassName)}
+          >
+            {linkLabel}
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        ) : (
+          <a
+            href={href}
+            className={cn("inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:text-[#8d0f17]", linkClassName)}
+          >
+            {linkLabel}
+            <ChevronRight className="h-4 w-4" />
+          </a>
+        )
       ) : null}
     </div>
   );

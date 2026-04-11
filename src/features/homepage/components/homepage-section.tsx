@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 
 import { NewsletterForm } from "@/components/forms/newsletter-form";
@@ -6,6 +7,18 @@ import { Reveal } from "@/components/shared/reveal";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { StoryCard } from "@/components/shared/story-card";
 import type { HomepageSectionData } from "@/types/cms";
+
+export function shouldRenderHomepageSection(section: HomepageSectionData) {
+  if (section.type === "NEWSLETTER_CTA") {
+    return true;
+  }
+
+  if (section.type === "SPONSORED_BLOCK" || section.type === "AD_SLOT_BLOCK") {
+    return Boolean(section.adSlot);
+  }
+
+  return section.items.length > 0 || Boolean(section.adSlot);
+}
 
 function defaultEyebrow(type: string) {
   switch (type) {
@@ -43,6 +56,30 @@ function defaultLayout(section: HomepageSectionData) {
   if (section.type === "VIDEO_HIGHLIGHTS") return "compact";
   if (section.type === "CATEGORY_BLOCK" || section.type === "EDITOR_PICKS") return "dense";
   return "cards";
+}
+
+function SectionActionLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href.startsWith("/")) {
+    return (
+      <Link href={href as Route} className={className}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  );
 }
 
 function UtilitySection({ section, index }: { section: HomepageSectionData; index: number }) {
@@ -84,7 +121,7 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
             ) : null}
             <div className="flex flex-wrap gap-3">
               {section.settings?.ctaHref && section.settings?.ctaLabel ? (
-                <a
+                <SectionActionLink
                   href={section.settings.ctaHref}
                   className={
                     isWeather
@@ -93,11 +130,11 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
                   }
                 >
                   {section.settings.ctaLabel}
-                </a>
+                </SectionActionLink>
               ) : null}
               {defaultHref(section) ? (
-                <a
-                  href={defaultHref(section)}
+                <SectionActionLink
+                  href={defaultHref(section)!}
                   className={
                     isWeather
                       ? "rounded-full border border-border px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-foreground"
@@ -105,7 +142,7 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
                   }
                 >
                   {section.settings?.viewAllLabel || "Explore"}
-                </a>
+                </SectionActionLink>
               ) : null}
             </div>
           </div>
@@ -198,6 +235,10 @@ function CompactStorySection({ section, index }: { section: HomepageSectionData;
 }
 
 export function HomepageSection({ section, index }: { section: HomepageSectionData; index: number }) {
+  if (!shouldRenderHomepageSection(section)) {
+    return null;
+  }
+
   if (section.type === "BREAKING_STRIP") {
     return (
       <Reveal delay={index * 0.04}>

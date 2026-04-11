@@ -1,24 +1,75 @@
-import type { Metadata } from "next";
-import { JetBrains_Mono, Merriweather, Source_Sans_3 } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 
 import "@/app/globals.css";
 import { absoluteUrl } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
+import { buildKeywords, getOrganizationJsonLd, getWebsiteJsonLd } from "@/lib/seo";
 
-const bodyFont = Source_Sans_3({
+const bodyFont = localFont({
   variable: "--font-body",
-  subsets: ["latin"],
+  display: "swap",
+  src: [
+    {
+      path: "../assets/fonts/source-sans-3-400.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/source-sans-3-600.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/source-sans-3-700.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/source-sans-3-800.ttf",
+      weight: "800",
+      style: "normal",
+    },
+  ],
 });
 
-const headlineFont = Merriweather({
+const headlineFont = localFont({
   variable: "--font-headline",
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
+  display: "swap",
+  src: [
+    {
+      path: "../assets/fonts/merriweather-400.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/merriweather-700.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/merriweather-900.ttf",
+      weight: "900",
+      style: "normal",
+    },
+  ],
 });
 
-const monoFont = JetBrains_Mono({
+const monoFont = localFont({
   variable: "--font-mono",
-  subsets: ["latin"],
+  display: "swap",
+  src: [
+    {
+      path: "../assets/fonts/jetbrains-mono-400.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/jetbrains-mono-700.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
 });
 
 export const metadata: Metadata = {
@@ -29,6 +80,14 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  keywords: buildKeywords(siteConfig.name, siteConfig.shortName, siteConfig.defaultKeywords),
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   alternates: {
     canonical: "/",
   },
@@ -39,11 +98,25 @@ export const metadata: Metadata = {
     type: "website",
     locale: siteConfig.locale,
     url: absoluteUrl("/"),
+    images: [
+      {
+        url: absoluteUrl(siteConfig.defaultOgImage),
+        alt: `${siteConfig.name} newsroom sharing image`,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
     creator: siteConfig.twitterHandle,
+    images: [absoluteUrl(siteConfig.defaultOgImage)],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: siteConfig.themeColor,
+  colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -51,10 +124,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationJsonLd = getOrganizationJsonLd();
+  const websiteJsonLd = getWebsiteJsonLd();
+
   return (
-    <html lang="en" className={`${bodyFont.variable} ${headlineFont.variable} ${monoFont.variable}`}>
-      <body className="min-h-screen bg-background text-foreground">{children}</body>
+    <html lang={siteConfig.language} className={`${bodyFont.variable} ${headlineFont.variable} ${monoFont.variable}`}>
+      <body className="min-h-screen bg-background text-foreground">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
-

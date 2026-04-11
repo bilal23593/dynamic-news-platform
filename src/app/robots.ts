@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/api/admin"],
     },
+    host: siteConfig.url,
     sitemap: `${siteConfig.url}/sitemap.xml`,
   };
 }
-

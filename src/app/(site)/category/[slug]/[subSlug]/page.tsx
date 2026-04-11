@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { BreadcrumbTrail } from "@/components/shared/breadcrumb-trail";
 import { StoryCard } from "@/components/shared/story-card";
+import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getSubCategoryPageData } from "@/server/cms/public";
 
 export const revalidate = 300;
@@ -16,10 +16,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getSubCategoryPageData(slug, subSlug);
   if (!data?.activeSubCategory) return {};
 
-  return {
+  return buildSeoMetadata({
     title: `${data.activeSubCategory.name} | ${data.category.name}`,
     description: `Coverage from ${data.activeSubCategory.name} within ${data.category.name}.`,
-  };
+    path: `/category/${data.category.slug}/${data.activeSubCategory.slug}`,
+    section: data.category.name,
+    keywords: buildKeywords(
+      data.category.name,
+      data.category.label,
+      data.activeSubCategory.name,
+      ["subsection news", "news archive"],
+    ),
+  });
 }
 
 export default async function SubCategoryPage({ params }: Props) {
@@ -29,13 +37,6 @@ export default async function SubCategoryPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 lg:px-6">
-      <BreadcrumbTrail
-        items={[
-          { label: "Home", href: "/" },
-          { label: data.category.name, href: `/category/${data.category.slug}` },
-          { label: data.activeSubCategory.name },
-        ]}
-      />
       <div className="space-y-3">
         <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Subsection</div>
         <h1 className="font-serif text-4xl font-black tracking-tight">{data.activeSubCategory.name}</h1>

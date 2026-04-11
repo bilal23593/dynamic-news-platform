@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 
-import { BreadcrumbTrail } from "@/components/shared/breadcrumb-trail";
+import { buildKeywords, buildSeoMetadata, resolveCanonicalUrl } from "@/lib/seo";
 import { getPublishedPageBySlug, getRedirectForPath } from "@/server/cms/public";
 
 export const revalidate = 900;
@@ -16,10 +16,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getPublishedPageBySlug(path);
   if (!page) return {};
 
-  return {
+  return buildSeoMetadata({
     title: page.seoTitle || page.title,
-    description: page.metaDescription || page.summary || "",
-  };
+    description: page.metaDescription || page.summary || `${page.title} on Redwire Daily.`,
+    path: `/${page.slug}`,
+    canonicalUrl: page.canonicalUrl,
+    keywords: buildKeywords(page.title, page.summary || undefined, ["newsroom page", "publisher information"]),
+  });
 }
 
 export default async function CatchAllCmsPage({ params }: Props) {
@@ -42,9 +45,17 @@ export default async function CatchAllCmsPage({ params }: Props) {
   const page = await getPublishedPageBySlug(slug[0]);
   if (!page) notFound();
 
+  const pageSchema = {
+    "@context": "https://schema.org",
+    "@type": page.schemaType || "WebPage",
+    name: page.title,
+    description: page.metaDescription || page.summary || undefined,
+    url: resolveCanonicalUrl(page.canonicalUrl, `/${page.slug}`),
+  };
+
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 lg:px-6">
-      <BreadcrumbTrail items={[{ label: "Home", href: "/" }, { label: page.title }]} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageSchema) }} />
       <header className="space-y-3">
         <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">CMS Page</div>
         <h1 className="font-serif text-5xl font-black tracking-tight">{page.title}</h1>
