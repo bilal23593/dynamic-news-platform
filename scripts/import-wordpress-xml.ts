@@ -10,6 +10,7 @@ import { resolveCategoryNavigationMeta } from "../src/lib/category-navigation";
 import { env } from "../src/lib/env";
 import { htmlToPlainText, sanitizeArticleHtml, stripShortcodes } from "../src/lib/content";
 import { calculateReadTime, slugify } from "../src/lib/utils";
+import { normalizeVideoEmbedUrl } from "../src/lib/video-embeds";
 import { inferImportedArticleCategory } from "../src/lib/wordpress-import/services/category-inference";
 import { prisma } from "../src/server/prisma";
 
@@ -242,11 +243,11 @@ function findMetaValue(meta: unknown, key: string) {
 function detectVideoEmbedUrl(html: string) {
   const iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/i);
   if (iframeMatch?.[1]) {
-    return iframeMatch[1];
+    return normalizeVideoEmbedUrl(iframeMatch[1]) || undefined;
   }
 
   const urlMatch = html.match(/https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be|vimeo\.com|rumble\.com|tiktok\.com)[^\s"'<>]+/i);
-  return urlMatch?.[0];
+  return normalizeVideoEmbedUrl(urlMatch?.[0] || "") || undefined;
 }
 
 function extractInlineMedia(html: string) {

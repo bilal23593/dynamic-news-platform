@@ -12,6 +12,7 @@
     "import:wordpress-xml": "tsx scripts/import-wordpress-xml.ts",
     "normalize:category-navigation": "tsx scripts/normalize-category-navigation.ts",
     "normalize:imported-categories": "tsx scripts/normalize-imported-categories.ts",
+    "repair:video-embeds": "tsx scripts/repair-imported-video-embeds.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",

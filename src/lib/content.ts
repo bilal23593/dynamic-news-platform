@@ -112,6 +112,7 @@ export function sanitizeArticleHtml(value: string) {
   return sanitizeHtml(value, {
     allowedTags: [
       "p",
+      "div",
       "h2",
       "h3",
       "h4",
@@ -127,11 +128,19 @@ export function sanitizeArticleHtml(value: string) {
       "figcaption",
       "br",
       "iframe",
+      "video",
+      "source",
     ],
     allowedAttributes: {
       a: ["href", "target", "rel"],
+      div: ["class", "data-video-provider", "data-video-status"],
+      p: ["class"],
+      figure: ["class", "data-video-provider", "data-video-status"],
+      figcaption: ["class"],
       img: ["src", "alt", "title"],
-      iframe: ["src", "allowfullscreen", "title", "width", "height"],
+      iframe: ["src", "allowfullscreen", "title", "width", "height", "loading", "allow", "referrerpolicy", "class", "frameborder"],
+      video: ["src", "controls", "playsinline", "preload", "poster", "class"],
+      source: ["src", "type"],
     },
     allowedSchemes: ["http", "https", "mailto"],
   });

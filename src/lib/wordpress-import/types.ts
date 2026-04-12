@@ -15,6 +15,7 @@ export type WordpressPostRecord = {
   slug: string;
   excerpt?: string;
   html: string;
+  videoEmbedUrl?: string;
   publishDate?: string;
   authorName?: string;
   status?: string;
@@ -41,4 +42,3 @@ export type WordpressDryRunResult = {
   previewTitles: string[];
   warnings: string[];
 };
-

@@ -2,6 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 
 import type { WordpressCategoryRef, WordpressPostRecord } from "@/lib/wordpress-import/types";
 import { extractInlineMedia } from "@/lib/wordpress-import/transformers/html";
+import { normalizeVideoEmbedUrl } from "@/lib/video-embeds";
 import { slugify } from "@/lib/utils";
 
 function toArray<T>(value: T | T[] | undefined): T[] {
@@ -11,6 +12,16 @@ function toArray<T>(value: T | T[] | undefined): T[] {
 
 function optionalString(value: unknown) {
   return value === null || value === undefined || value === "" ? undefined : String(value);
+}
+
+function detectVideoEmbedUrl(html: string) {
+  const iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  if (iframeMatch?.[1]) {
+    return normalizeVideoEmbedUrl(iframeMatch[1]) || undefined;
+  }
+
+  const urlMatch = html.match(/https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be|vimeo\.com|rumble\.com|tiktok\.com)[^\s"'<>]+/i);
+  return normalizeVideoEmbedUrl(urlMatch?.[0] || "") || undefined;
 }
 
 export function parseWordpressXml(payload: string): WordpressPostRecord[] {
@@ -42,6 +53,7 @@ export function parseWordpressXml(payload: string): WordpressPostRecord[] {
         slug: item.post_name || slugify(item.title || "imported-post"),
         excerpt: item["encoded"] || item.excerpt || item.description || "",
         html,
+        videoEmbedUrl: detectVideoEmbedUrl(html),
         publishDate: optionalString(item.post_date_gmt || item.post_date || item.pubDate),
         authorName: optionalString(item.creator),
         status: optionalString(item.status),

@@ -9,6 +9,7 @@ import { mapWordpressCategories } from "@/lib/wordpress-import/mappers/categorie
 import { inferImportedArticleCategory } from "@/lib/wordpress-import/services/category-inference";
 import { transformWordpressHtmlToEditorBlocks } from "@/lib/wordpress-import/transformers/html";
 import type { WordpressDryRunResult, WordpressImportInput, WordpressPostRecord } from "@/lib/wordpress-import/types";
+import { normalizeVideoEmbedUrl } from "@/lib/video-embeds";
 import { slugify } from "@/lib/utils";
 
 function parsePayload(input: WordpressImportInput): WordpressPostRecord[] {
@@ -173,6 +174,7 @@ export async function importPostsFromWordpress(input: WordpressImportInput, init
         contentJson: transformed.json as Prisma.InputJsonValue,
         contentText: transformed.text,
         featuredImageId: post.featuredImageUrl ? mediaMap.get(post.featuredImageUrl) : undefined,
+        videoEmbedUrl: normalizeVideoEmbedUrl(post.videoEmbedUrl) || undefined,
         categoryId: categoryMap.get(resolvedCategorySlug) || categoryMap.get(primaryCategory?.slug || "") || (await prisma.category.findFirst({ select: { id: true } }))!.id,
         authorId: authorMap.get(authorSlug) || (await prisma.authorProfile.findFirst({ select: { id: true } }))!.id,
         status: post.status === "publish" ? "PUBLISHED" : "DRAFT",
