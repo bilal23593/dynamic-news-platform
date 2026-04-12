@@ -90,11 +90,11 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
       <section
         className={
           isWeather
-            ? "rounded-[var(--radius)] border border-border/70 bg-[linear-gradient(135deg,#fff7f7,#fff)] p-6 shadow-[0_16px_40px_rgba(17,17,17,0.08)] lg:p-8"
-            : "rounded-[var(--radius)] border border-primary/10 bg-[linear-gradient(135deg,#111111,#2a2a2a)] p-6 text-white shadow-[0_20px_60px_rgba(17,17,17,0.18)] lg:p-8"
+            ? "rounded-[var(--radius)] border border-border/70 bg-[linear-gradient(135deg,#fff7f7,#fff)] p-5 shadow-[0_16px_40px_rgba(17,17,17,0.08)] sm:p-6 lg:p-8"
+            : "rounded-[var(--radius)] border border-primary/10 bg-[linear-gradient(135deg,#111111,#2a2a2a)] p-5 text-white shadow-[0_20px_60px_rgba(17,17,17,0.18)] sm:p-6 lg:p-8"
         }
       >
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_0.9fr]">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_0.9fr] lg:gap-6">
           <div className="space-y-4">
             <div
               className={
@@ -108,8 +108,8 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
             <h2
               className={
                 isWeather
-                  ? "font-serif text-3xl font-black tracking-tight text-foreground lg:text-4xl"
-                  : "font-serif text-3xl font-black tracking-tight lg:text-4xl"
+                  ? "font-serif text-[1.85rem] font-black tracking-tight text-foreground sm:text-3xl lg:text-4xl"
+                  : "font-serif text-[1.85rem] font-black tracking-tight sm:text-3xl lg:text-4xl"
               }
             >
               {section.title}
@@ -125,7 +125,7 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
                   href={section.settings.ctaHref}
                   className={
                     isWeather
-                      ? "rounded-full bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-white"
+                      ? "rounded-full bg-secondary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#2a2a2a]"
                       : "rounded-full bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-secondary"
                   }
                 >
@@ -147,7 +147,7 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
             </div>
           </div>
 
-            <div className="grid gap-3">
+            <div className="grid auto-rows-fr gap-3">
             {section.items.slice(0, 3).map((article) => (
               <Link
                 key={article.slug}
@@ -155,14 +155,14 @@ function UtilitySection({ section, index }: { section: HomepageSectionData; inde
                 prefetch={false}
                 className={
                   isWeather
-                    ? "rounded-2xl border border-border/70 bg-white px-4 py-4 shadow-[0_12px_30px_rgba(17,17,17,0.06)]"
-                    : "rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur"
+                    ? "flex h-full min-h-[8.5rem] flex-col justify-between rounded-2xl border border-border/70 bg-white px-4 py-4 shadow-[0_12px_30px_rgba(17,17,17,0.06)]"
+                    : "flex h-full min-h-[8.5rem] flex-col justify-between rounded-2xl border border-white/10 bg-white/6 px-4 py-4 backdrop-blur"
                 }
               >
                 <div className={isWeather ? "mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-primary" : "mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/55"}>
                   {article.category.label || article.category.name}
                 </div>
-                <div className={isWeather ? "font-serif text-xl font-black leading-snug text-foreground" : "font-serif text-xl font-black leading-snug text-white"}>
+                <div className={isWeather ? "line-clamp-3 font-serif text-lg font-black leading-snug text-foreground sm:text-xl" : "line-clamp-3 font-serif text-lg font-black leading-snug text-white sm:text-xl"}>
                   {article.title}
                 </div>
               </Link>

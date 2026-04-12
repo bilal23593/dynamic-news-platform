@@ -210,7 +210,7 @@ function AdSlotBlockContent({
               href={slot.targetUrl}
               target="_blank"
               rel="sponsored noopener"
-              className="inline-flex rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white"
+              className="inline-flex rounded-full bg-secondary px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#2a2a2a]"
             >
               {slot.ctaLabel}
             </a>

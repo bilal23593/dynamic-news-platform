@@ -1226,8 +1226,8 @@ export const demoSettings = [
     label: "Contact Details",
     description: "Public contact information rendered in footer and contact page.",
     value: {
-      newsroomEmail: "newsroom@redwiredaily.com",
-      tipsEmail: "tips@redwiredaily.com",
+      newsroomEmail: "news@newschannel3now.com",
+      tipsEmail: "news@newschannel3now.com",
       phone: "(404) 555-0184",
       address: "120 Peachtree Center Ave, Atlanta, GA 30303",
     },

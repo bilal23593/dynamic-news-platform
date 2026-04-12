@@ -34,8 +34,8 @@ export function PublicFooter({
         <div className="space-y-4">
           <Logo className="text-white" />
           <p className="max-w-md text-sm leading-7 text-white/70">
-            Redwire Daily is a modular newsroom platform built for editorial speed, richer metadata,
-            stronger workflows, and future WordPress migration without replatforming pain.
+            {siteConfig.name} is a digital-first newsroom built for rapid publishing, stronger metadata,
+            cleaner workflows, and always-on breaking coverage.
           </p>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
             {siteConfig.contactEmail}

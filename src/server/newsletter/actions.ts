@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { siteConfig } from "@/config/site";
 import type { ActionState } from "@/types";
 import { prisma } from "@/server/prisma";
 
@@ -42,7 +43,6 @@ export async function subscribeToNewsletter(
 
   return {
     ok: true,
-    message: "You're subscribed to the Redwire briefing.",
+    message: `You're subscribed to the ${siteConfig.name} briefing.`,
   };
 }
-

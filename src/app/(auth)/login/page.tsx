@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/forms/login-form";
+import { siteConfig } from "@/config/site";
 
 export default function LoginPage() {
   return (
@@ -7,7 +8,7 @@ export default function LoginPage() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.2fr_420px]">
         <section className="space-y-6 text-white">
           <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-            Redwire Daily CMS
+            {siteConfig.name} CMS
           </div>
           <h1 className="max-w-2xl font-serif text-5xl font-black tracking-tight lg:text-7xl">
             Publish faster, edit smarter, and keep migration-ready structure.
@@ -20,7 +21,7 @@ export default function LoginPage() {
         <Card className="border-white/10 bg-white">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
-            <CardDescription>Use the seeded newsroom account or a user created in the admin panel.</CardDescription>
+            <CardDescription>Sign in with your newsroom account.</CardDescription>
           </CardHeader>
           <CardContent>
             <LoginForm />
@@ -30,4 +31,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

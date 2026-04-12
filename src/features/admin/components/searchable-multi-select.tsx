@@ -129,7 +129,7 @@ export function SearchableMultiSelect({
               key={item.id}
               type="button"
               onClick={() => removeItem(item.id)}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-[#e6e6e6]"
             >
               <span className="max-w-[24ch] truncate">{item.label}</span>
               <span aria-hidden="true">x</span>
@@ -177,7 +177,7 @@ export function SearchableMultiSelect({
                       "shrink-0 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em]",
                       selectedItem
                         ? "border border-border bg-white text-foreground"
-                        : "bg-primary text-white",
+                        : "bg-secondary text-white hover:bg-[#2a2a2a]",
                     )}
                   >
                     {selectedItem ? "Remove" : "Add"}

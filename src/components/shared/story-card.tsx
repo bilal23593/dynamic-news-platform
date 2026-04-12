@@ -46,13 +46,15 @@ export function StoryCard({
             alt={article.featuredImageAlt || article.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
+            fetchPriority={priority ? "high" : undefined}
             priority={priority}
+            quality={isCompact ? 56 : isLead ? 62 : 60}
             sizes={
               isCompact
                 ? "112px"
                 : isLead
-                  ? "(min-width: 1280px) 760px, (min-width: 1024px) 58vw, 100vw"
-                  : "(min-width: 1280px) 360px, (min-width: 768px) 50vw, 100vw"
+                  ? "(min-width: 1280px) 760px, (min-width: 1024px) 58vw, 92vw"
+                  : "(min-width: 1280px) 360px, (min-width: 768px) 50vw, 92vw"
             }
           />
         </Link>

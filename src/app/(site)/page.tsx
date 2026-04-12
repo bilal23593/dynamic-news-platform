@@ -9,7 +9,7 @@ export const revalidate = 180;
 
 export const metadata: Metadata = buildSeoMetadata({
   title: siteConfig.name,
-  description: "Breaking stories, live updates, video highlights, and curated local-to-national reporting from Redwire Daily.",
+  description: `Breaking stories, live updates, video highlights, and curated local-to-national reporting from ${siteConfig.name}.`,
   path: "/",
   keywords: buildKeywords(siteConfig.defaultKeywords, ["top stories", "latest headlines", siteConfig.shortName]),
 });

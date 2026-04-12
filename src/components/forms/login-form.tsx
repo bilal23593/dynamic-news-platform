@@ -17,11 +17,11 @@ export function LoginForm() {
     <form action={action} className="grid gap-5">
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" placeholder="editor@redwire.local" required />
+        <Input id="email" name="email" type="email" placeholder="name@example.com" required />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="password">Password</Label>
-        <Input id="password" name="password" type="password" placeholder="Newsroom123!" required />
+        <Input id="password" name="password" type="password" placeholder="Enter your password" required />
       </div>
       <SubmitButton className="w-full">Sign in to the newsroom</SubmitButton>
       {state?.message ? (

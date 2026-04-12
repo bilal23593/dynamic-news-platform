@@ -1,30 +1,19 @@
-'use client';
-
-import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
+import type { CSSProperties, ReactNode } from "react";
 
 export function Reveal({
   children,
   delay = 0,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   delay?: number;
 }) {
-  const prefersReducedMotion = useReducedMotion();
-
-  if (prefersReducedMotion) {
-    return <>{children}</>;
-  }
+  const style = {
+    "--reveal-delay": `${Math.max(0, Math.min(delay, 0.18))}s`,
+  } as CSSProperties;
 
   return (
-    <LazyMotion features={domAnimation}>
-      <m.div
-        initial={{ opacity: 0, y: 14 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.18 }}
-        transition={{ duration: 0.32, ease: "easeOut", delay }}
-      >
-        {children}
-      </m.div>
-    </LazyMotion>
+    <div className="reveal-up" style={style}>
+      {children}
+    </div>
   );
 }

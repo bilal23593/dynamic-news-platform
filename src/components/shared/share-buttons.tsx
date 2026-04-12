@@ -41,7 +41,9 @@ export function ShareButtons({ path, title }: { path: string; title: string }) {
   const encodedTitle = encodeURIComponent(title);
   const [copied, setCopied] = useState(false);
   const followHref = siteConfig.googleNewsUrl || "/news";
-  const followLabel = siteConfig.googleNewsUrl ? "Add Redwire on Google News" : "Follow Redwire Updates";
+  const followLabel = siteConfig.googleNewsUrl
+    ? `Add ${siteConfig.shortName} on Google News`
+    : `Follow ${siteConfig.shortName} Updates`;
 
   async function handleCopy() {
     try {
@@ -99,7 +101,7 @@ export function ShareButtons({ path, title }: { path: string; title: string }) {
         type="button"
         onClick={handleCopy}
         aria-label="Copy story link"
-        className={actionButtonClassName(copied ? "bg-primary" : "bg-[#174a82]")}
+        className={actionButtonClassName(copied ? "bg-secondary" : "bg-[#174a82]")}
       >
         <Link2 className="h-5 w-5" />
       </button>

@@ -8,25 +8,28 @@ import { buildKeywords, getOrganizationJsonLd, getWebsiteJsonLd } from "@/lib/se
 
 const bodyFont = localFont({
   variable: "--font-body",
-  display: "swap",
+  adjustFontFallback: "Arial",
+  display: "optional",
+  fallback: ["Arial", "system-ui", "sans-serif"],
+  preload: false,
   src: [
     {
-      path: "../assets/fonts/source-sans-3-400.ttf",
+      path: "../assets/fonts/source-sans-3-400.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../assets/fonts/source-sans-3-600.ttf",
+      path: "../assets/fonts/source-sans-3-600.woff2",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../assets/fonts/source-sans-3-700.ttf",
+      path: "../assets/fonts/source-sans-3-700.woff2",
       weight: "700",
       style: "normal",
     },
     {
-      path: "../assets/fonts/source-sans-3-800.ttf",
+      path: "../assets/fonts/source-sans-3-800.woff2",
       weight: "800",
       style: "normal",
     },
@@ -35,20 +38,23 @@ const bodyFont = localFont({
 
 const headlineFont = localFont({
   variable: "--font-headline",
-  display: "swap",
+  adjustFontFallback: "Times New Roman",
+  display: "optional",
+  fallback: ["Georgia", "Times New Roman", "serif"],
+  preload: false,
   src: [
     {
-      path: "../assets/fonts/merriweather-400.ttf",
+      path: "../assets/fonts/merriweather-400.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../assets/fonts/merriweather-700.ttf",
+      path: "../assets/fonts/merriweather-700.woff2",
       weight: "700",
       style: "normal",
     },
     {
-      path: "../assets/fonts/merriweather-900.ttf",
+      path: "../assets/fonts/merriweather-900.woff2",
       weight: "900",
       style: "normal",
     },
@@ -57,15 +63,18 @@ const headlineFont = localFont({
 
 const monoFont = localFont({
   variable: "--font-mono",
-  display: "swap",
+  adjustFontFallback: "Arial",
+  display: "optional",
+  fallback: ["Courier New", "monospace"],
+  preload: false,
   src: [
     {
-      path: "../assets/fonts/jetbrains-mono-400.ttf",
+      path: "../assets/fonts/jetbrains-mono-400.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../assets/fonts/jetbrains-mono-700.ttf",
+      path: "../assets/fonts/jetbrains-mono-700.woff2",
       weight: "700",
       style: "normal",
     },

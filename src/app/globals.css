@@ -9,7 +9,7 @@
   --muted-foreground: #5c5c5c;
   --border: #dedede;
   --input: #ffffff;
-  --ring: #b30d16;
+  --ring: #111111;
   --primary: #b30d16;
   --primary-foreground: #ffffff;
   --secondary: #111111;
@@ -260,9 +260,9 @@ select {
   align-items: center;
   margin-top: 0.9rem;
   border-radius: 999px;
-  background: #b30d16;
+  background: var(--secondary);
   padding: 0.7rem 1rem;
-  color: #ffffff;
+  color: var(--secondary-foreground);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -335,9 +335,9 @@ select {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  background: #b30d16;
+  background: var(--secondary);
   padding: 0.6rem 1rem;
-  color: #ffffff;
+  color: var(--secondary-foreground);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -369,6 +369,23 @@ select {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-up {
+    animation: reveal-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--reveal-delay, 0s);
+  }
+}
+
+@keyframes reveal-up {
+  from {
+    transform: translate3d(0, 10px, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
   }
 }
 

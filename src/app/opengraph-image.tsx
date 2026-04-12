@@ -18,71 +18,93 @@ export default function OpenGraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "54px 62px",
-          background:
-            "linear-gradient(135deg, #ffffff 0%, #f7f1f1 42%, #f5d8da 100%)",
-          color: "#111111",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "56px",
+          background: "linear-gradient(160deg, #060606 0%, #111111 55%, #1a1a1a 100%)",
+          color: "#ffffff",
         }}
       >
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: 22,
+            justifyContent: "center",
+            gap: 36,
+            width: "100%",
+            maxWidth: "1060px",
           }}
         >
           <div
             style={{
-              width: 84,
-              height: 84,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: 999,
-              background: "#b30d16",
-              color: "#ffffff",
-              fontSize: 38,
-              fontWeight: 900,
+              borderRadius: 26,
+              overflow: "hidden",
+              boxShadow: "0 24px 54px rgba(0,0,0,0.4)",
             }}
           >
-            R
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 48, fontWeight: 900 }}>Redwire Daily</div>
             <div
               style={{
-                fontSize: 18,
-                letterSpacing: 6,
+                display: "flex",
+                alignItems: "center",
+                background: "#000000",
+                color: "#ffffff",
+                fontSize: 72,
+                fontWeight: 900,
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "#6a6a6a",
+                padding: "24px 32px",
               }}
             >
-              Fast Reporting. Clean Signal.
+              {siteConfig.logoLabelPrimary}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                background: siteConfig.brandRed,
+                color: "#ffffff",
+                fontSize: 72,
+                fontWeight: 900,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                padding: "24px 30px",
+              }}
+            >
+              {siteConfig.logoLabelSecondary}
             </div>
           </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div
             style={{
-              fontSize: 22,
-              fontWeight: 800,
-              letterSpacing: 5,
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+              fontSize: 24,
+              fontWeight: 700,
+              letterSpacing: "0.22em",
               textTransform: "uppercase",
-              color: "#b30d16",
+              color: "#ff5a66",
             }}
           >
-            Breaking News and Digital Coverage
+            Breaking Updates Right Now
           </div>
           <div
             style={{
-              maxWidth: 880,
-              fontSize: 74,
-              lineHeight: 1.02,
-              fontWeight: 900,
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+              maxWidth: "980px",
+              fontSize: 60,
+              lineHeight: 1.08,
+              fontWeight: 800,
+              textAlign: "center",
+              color: "#f3f3f3",
             }}
           >
-            Modern newsroom publishing for fast-moving stories, video, and search.
+            Live coverage, fast reporting, and social-first publishing from {siteConfig.name}.
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 
+import { siteConfig } from "@/config/site";
 import { buildKeywords, buildSeoMetadata, resolveCanonicalUrl } from "@/lib/seo";
 import { getPublishedPageBySlug, getRedirectForPath } from "@/server/cms/public";
 
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return buildSeoMetadata({
     title: page.seoTitle || page.title,
-    description: page.metaDescription || page.summary || `${page.title} on Redwire Daily.`,
+    description: page.metaDescription || page.summary || `${page.title} on ${siteConfig.name}.`,
     path: `/${page.slug}`,
     canonicalUrl: page.canonicalUrl,
     keywords: buildKeywords(page.title, page.summary || undefined, ["newsroom page", "publisher information"]),

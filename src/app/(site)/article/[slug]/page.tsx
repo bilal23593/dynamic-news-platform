@@ -269,10 +269,6 @@ export default async function ArticlePage({ params }: Props) {
           ) : null}
 
           <div className="editorial-surface rounded-[var(--radius)] border border-border/60 p-4 sm:p-6 lg:p-8">
-            <div className="mb-4 rounded-[calc(var(--radius)-4px)] border border-border/70 bg-accent/45 px-4 py-4 sm:mb-5 sm:px-5">
-              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">What To Know</div>
-              <p className="mt-2 text-base leading-8 text-foreground sm:text-lg">{article.excerpt}</p>
-            </div>
             <div
               className="story-copy"
               dangerouslySetInnerHTML={{ __html: enrichedArticleHtml }}

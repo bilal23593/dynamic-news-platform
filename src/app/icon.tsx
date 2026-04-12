@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+import { siteConfig } from "@/config/site";
+
 export const size = {
   width: 512,
   height: 512,
@@ -17,14 +19,14 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#b30d16",
+          background: siteConfig.brandRed,
           color: "#ffffff",
           fontSize: 290,
           fontWeight: 900,
           borderRadius: 96,
         }}
       >
-        R
+        {siteConfig.logoMark}
       </div>
     ),
     size,
