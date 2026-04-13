@@ -1,13 +1,13 @@
 import { updateTag } from "next/cache";
 
 export const CMS_CACHE_TTL = {
-  article: 120,
-  homepage: 180,
-  listing: 300,
-  chrome: 900,
-  page: 900,
-  redirect: 900,
-  sitemap: 1800,
+  article: 600,
+  homepage: 300,
+  listing: 600,
+  chrome: 3600,
+  page: 3600,
+  redirect: 3600,
+  sitemap: 3600,
 } as const;
 
 export const CMS_CACHE_TAGS = {

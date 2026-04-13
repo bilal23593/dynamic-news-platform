@@ -5,13 +5,19 @@ import { notFound } from "next/navigation";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { StoryCard } from "@/components/shared/story-card";
 import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
+import { getStaticCategoryParams } from "@/server/cms/static-params";
 import { getCategoryPageData } from "@/server/cms/public";
 
-export const revalidate = 300;
+export const dynamic = "force-static";
+export const revalidate = 600;
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateStaticParams() {
+  return getStaticCategoryParams();
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

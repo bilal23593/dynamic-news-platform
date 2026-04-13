@@ -17,9 +17,10 @@ import { buildKeywords, buildSeoMetadata, resolveCanonicalUrl } from "@/lib/seo"
 import { formatDate } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { getAdSlotsByPlacement, getArticleBySlug, getArticleShellBySlug } from "@/server/cms/public";
-import { prisma } from "@/server/prisma";
+import { queueArticleView } from "@/server/cms/view-tracker";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
+export const revalidate = 600;
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -169,12 +170,9 @@ export default async function ArticlePage({ params }: Props) {
   const sidebarAdsPromise = getAdSlotsByPlacement("SIDEBAR");
 
   if (article.id) {
-    after(() =>
-      prisma.article.update({
-        where: { id: article.id },
-        data: { viewCount: { increment: 1 } },
-      }),
-    );
+    after(() => {
+      queueArticleView(article.id!);
+    });
   }
 
   const schema = {

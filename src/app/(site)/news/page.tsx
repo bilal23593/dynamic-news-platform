@@ -6,7 +6,7 @@ import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getLatestArticles } from "@/server/cms/public";
 import { siteConfig } from "@/config/site";
 
-export const revalidate = 300;
+export const revalidate = 600;
 
 export const metadata: Metadata = buildSeoMetadata({
   title: "Latest News",

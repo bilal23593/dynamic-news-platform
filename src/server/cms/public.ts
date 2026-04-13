@@ -830,24 +830,37 @@ export async function getTagPageData(slug: string) {
         [CMS_CACHE_TAGS.articles, CMS_CACHE_TAGS.tags, cmsCacheTag.tag(slug)],
         CMS_CACHE_TTL.listing,
         async () => {
-      const tag = await prisma.tag.findUnique({
-        where: { slug },
-        include: {
-          articleTags: {
-            include: {
-              article: {
-                include: publicArticleInclude,
+      const [tag, articles] = await Promise.all([
+        prisma.tag.findUnique({
+          where: { slug },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        }),
+        prisma.article.findMany({
+          where: {
+            status: "PUBLISHED",
+            tags: {
+              some: {
+                tag: {
+                  slug,
+                },
               },
             },
           },
-        },
-      });
+          include: publicArticleInclude,
+          orderBy: { publishAt: "desc" },
+          take: 24,
+        }),
+      ]);
 
       if (!tag) return null;
 
       return {
         tag: { id: tag.id, name: tag.name, slug: tag.slug },
-        articles: tag.articleTags.map((item) => mapPrismaArticle(item.article)),
+        articles: articles.map(mapPrismaArticle),
       };
         },
       ),
@@ -860,7 +873,10 @@ export async function getTagPageData(slug: string) {
           name: tag.name,
           slug: tag.slug,
         },
-        articles: demoArticles.filter((item) => item.tagSlugs.includes(slug)).map(mapDemoArticle),
+        articles: demoArticles
+          .filter((item) => item.tagSlugs.includes(slug))
+          .slice(0, 24)
+          .map(mapDemoArticle),
       };
     },
   );
@@ -882,6 +898,7 @@ export async function getAuthorPageData(slug: string) {
             where: { status: "PUBLISHED" },
             include: publicArticleInclude,
             orderBy: { publishAt: "desc" },
+            take: 24,
           },
         },
       });
@@ -907,7 +924,10 @@ export async function getAuthorPageData(slug: string) {
       if (!author) return null;
       return {
         author: mapDemoAuthor(slug),
-        articles: demoArticles.filter((item) => item.authorSlug === slug).map(mapDemoArticle),
+        articles: demoArticles
+          .filter((item) => item.authorSlug === slug)
+          .slice(0, 24)
+          .map(mapDemoArticle),
       };
     },
   );

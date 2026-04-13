@@ -6,12 +6,18 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import { StoryCard } from "@/components/shared/story-card";
 import { buildKeywords, buildSeoMetadata, resolveCanonicalUrl } from "@/lib/seo";
 import { getAuthorPageData } from "@/server/cms/public";
+import { getStaticAuthorParams } from "@/server/cms/static-params";
 
-export const revalidate = 300;
+export const dynamic = "force-static";
+export const revalidate = 600;
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateStaticParams() {
+  return getStaticAuthorParams();
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

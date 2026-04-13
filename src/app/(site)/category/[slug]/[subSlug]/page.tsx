@@ -4,12 +4,18 @@ import { notFound } from "next/navigation";
 import { StoryCard } from "@/components/shared/story-card";
 import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getSubCategoryPageData } from "@/server/cms/public";
+import { getStaticSubCategoryParams } from "@/server/cms/static-params";
 
-export const revalidate = 300;
+export const dynamic = "force-static";
+export const revalidate = 600;
 
 type Props = {
   params: Promise<{ slug: string; subSlug: string }>;
 };
+
+export async function generateStaticParams() {
+  return getStaticSubCategoryParams();
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, subSlug } = await params;

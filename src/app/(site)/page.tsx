@@ -5,7 +5,7 @@ import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getHomepageData } from "@/server/cms/public";
 import { siteConfig } from "@/config/site";
 
-export const revalidate = 180;
+export const revalidate = 300;
 
 export const metadata: Metadata = buildSeoMetadata({
   title: siteConfig.name,

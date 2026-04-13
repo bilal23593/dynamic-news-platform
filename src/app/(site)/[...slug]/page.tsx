@@ -4,12 +4,18 @@ import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { buildKeywords, buildSeoMetadata, resolveCanonicalUrl } from "@/lib/seo";
 import { getPublishedPageBySlug, getRedirectForPath } from "@/server/cms/public";
+import { getStaticPageParams } from "@/server/cms/static-params";
 
-export const revalidate = 900;
+export const dynamic = "force-static";
+export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ slug: string[] }>;
 };
+
+export async function generateStaticParams() {
+  return getStaticPageParams();
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

@@ -6,7 +6,8 @@ import { StoryCard } from "@/components/shared/story-card";
 import { buildKeywords, buildSeoMetadata } from "@/lib/seo";
 import { getTagPageData } from "@/server/cms/public";
 
-export const revalidate = 300;
+export const dynamic = "force-static";
+export const revalidate = 600;
 
 type Props = {
   params: Promise<{ slug: string }>;
