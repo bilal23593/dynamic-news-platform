@@ -10,6 +10,9 @@ export const size = {
 export const contentType = "image/png";
 
 export default function OpenGraphImage() {
+  const wordmark = `${siteConfig.logoLabelPrimary}${siteConfig.logoLabelSecondary}`;
+  const colorSplit = "71.5%";
+
   return new ImageResponse(
     (
       <div
@@ -40,41 +43,26 @@ export default function OpenGraphImage() {
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "flex-start",
               borderRadius: 26,
               overflow: "hidden",
               boxShadow: "0 24px 54px rgba(0,0,0,0.4)",
+              background: `linear-gradient(90deg, #000000 0%, #000000 ${colorSplit}, ${siteConfig.brandRed} ${colorSplit}, ${siteConfig.brandRed} 100%)`,
             }}
           >
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                background: "#000000",
                 color: "#ffffff",
                 fontSize: 72,
                 fontWeight: 900,
-                letterSpacing: "0.08em",
+                letterSpacing: "0.05em",
                 textTransform: "uppercase",
-                padding: "24px 32px",
+                padding: "24px 34px",
               }}
             >
-              {siteConfig.logoLabelPrimary}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                background: siteConfig.brandRed,
-                color: "#ffffff",
-                fontSize: 72,
-                fontWeight: 900,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                padding: "24px 30px",
-              }}
-            >
-              {siteConfig.logoLabelSecondary}
+              {wordmark}
             </div>
           </div>
           <div
